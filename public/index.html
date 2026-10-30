@@ -287,6 +287,42 @@
             </article>
           </aside>
         </div>
+        <article class="panel director-desk" id="director-desk">
+          <div class="panel-heading">
+            <div class="panel-title">
+              <span data-icon="spark"></span> The director’s desk
+              <span class="tag">EXPLAINABLE RETRIEVAL</span>
+            </div>
+            <span class="engine-pill" id="retrieval-mode">Archive ready</span>
+          </div>
+          <div class="director-body">
+            <div>
+              <div class="eyebrow">WHY THIS MEMORY?</div>
+              <h3 id="director-title">A connection should earn its place.</h3>
+              <p id="director-copy">
+                Watch the candidates separate as chat builds context. Every
+                callback has to clear the same safety gates.
+              </p>
+              <div id="rival-matches" class="rival-matches">
+                <div class="rival-empty">
+                  <span>↶</span> Start a replay to inspect the search.
+                </div>
+              </div>
+            </div>
+            <div class="director-right">
+              <div class="eyebrow">THE AIRING CHECKLIST</div>
+              <div id="safety-gates" class="safety-gates">
+                <span>○ Strong similarity</span
+                ><span>○ Clear of the runner-up</span
+                ><span>○ Multiple voices</span><span>○ Cooldown clear</span
+                ><span>○ Not already aired</span>
+              </div>
+              <div class="retrieval-footnote" id="retrieval-evidence">
+                Twitch Helix archive · original-host playback
+              </div>
+            </div>
+          </div>
+        </article>
         <div class="stats-grid">
           <article class="stat-card">
             <div>
@@ -432,7 +468,7 @@
             </div>
             <div class="preview-footer">
               <span class="status-dot"></span
-              ><strong>OBS-compatible · 1920 × 1080</strong
+              ><strong id="obs-status">OBS not connected · 1920 × 1080</strong
               ><span class="tag">TRANSPARENT</span>
             </div>
           </article>
@@ -477,6 +513,8 @@
                 target="_blank"
                 rel="noreferrer"
                 >Open overlay <span>↗</span></a
+              ><button class="button button-white" id="download-obs">
+                Download OBS scene</button
               ><button class="subtle-button" id="rotate-overlay">
                 Reset private link
               </button>

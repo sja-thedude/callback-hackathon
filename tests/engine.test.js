@@ -59,8 +59,14 @@ test("IRC messages parse display names and reject protocol messages", () => {
 test("each demo clip has a unique public link and valid date", () => {
   assert.equal(new Set(clips.map((c) => c.id)).size, clips.length);
   for (const c of clips) {
-    assert.ok(c.url.startsWith("https://clips.twitch.tv/"));
+    assert.ok(
+      ["clips.twitch.tv", "www.twitch.tv"].includes(new URL(c.url).hostname),
+    );
+    assert.ok(new URL(c.url).pathname.endsWith(c.id));
     assert.ok(Number.isFinite(Date.parse(c.date)));
     assert.equal(c.broadcaster, "LIRIK");
+    assert.equal(c.broadcasterId, "23161357");
+    assert.ok(c.thumbnail.startsWith("https://"));
+    assert.ok(c.duration > 0);
   }
 });

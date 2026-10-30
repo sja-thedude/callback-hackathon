@@ -10,12 +10,14 @@ Open the demo, press **Let’s replay**, and watch the engine find a connection.
 
 ## What works
 
-- Four scripted replay scenarios against six real, credited public clips. Pause, rewind, change speed, and inspect the result.
+- Four natural chat replay scenarios against six Helix-indexed, credited public clips. Pause, rewind, change speed, and inspect the result.
 - Dedicated transparent OBS page, invisible even during startup, with an animated entrance, original clip player, date, connection, progress bar, and exit.
 - Server-synchronized overlays, including overlays opened on another device. Private overlay links can be rotated.
 - Searchable clip library with category filters, original clip playback, and overlay previews.
 - Adjustable confidence, cooldown, screen duration, automatic airing, and chat posting.
+- A director’s desk with three ranked candidates, model identity, match separation, and explicit airing gates.
 - Candidate reasoning, manual approval, veto, session history restored on refresh, and downloadable evidence.
+- Live browser-source presence and a private, downloadable OBS scene collection. Demo and live browser-source modes are separate, so rehearsals cannot accidentally appear on a live-mode source.
 - Light, dark, and system themes; responsive layouts checked at 390px; keyboard focus and reduced-motion support.
 - Twitch authorization-code flow, expiring state, server-only credentials, token refresh, and disconnect/revocation.
 - Own-channel Helix indexing with progress, up to 500 clips per index operation, category resolution, neural embeddings, and durable vector storage.
@@ -67,7 +69,11 @@ Live indexing embeds each clip's title and game category with **BGE Small Englis
 
 A callback must exceed the configured score, beat the runner-up by at least 0.08, clear the cooldown, and not have aired or been vetoed in this session. Three distinct chatters are required. Manual approval cannot bypass these checks, and candidates expire after 45 seconds. Similarity is a retrieval signal, not a calibrated probability.
 
-The account-free demo uses a deterministic, concept-assisted 256-dimensional vector index and manually written replay context. It demonstrates retrieval and timing without making neural inference calls. Demo cooldown is compressed to eight seconds; connected live cooldowns have a one-minute minimum. Chat replay, contextual tags, and illustrated scenery are authored demo material, not historical chat or gameplay footage. Live retrieval uses clip metadata rather than VOD transcripts; short or vague titles may not produce a strong match.
+The account-free demo runs **BGE Small English v1.5** retrieval over an API-verified, fixed public library. Its neural endpoint accepts only known replay windows; it cannot accept arbitrary inference prompts. Public vectors and replay search results are cached, concurrent identical requests share work, and an edge rate limiter bounds inference requests. A labeled local concept-assisted vector fallback keeps rehearsal usable if neural retrieval is temporarily unavailable. Similarity remains a retrieval signal rather than a calibrated probability.
+
+Replay text and contextual tags are authored demo material, not historical chat or clip transcripts. Demo cooldown is compressed to eight seconds; connected live cooldowns have a one-minute minimum. Live retrieval uses clip metadata rather than VOD transcripts; vague titles may not produce a strong match.
+
+Refresh the public demo snapshot with `npm run index:demo` using Node 22+ and credentials in the ignored `.env` file. The script retrieves the selected clips through Helix, checks every broadcaster ID against LIRIK, resolves categories, and writes only public metadata to `public/demo-library.js`. It stops without replacing the index if a selected clip disappears or belongs to another channel.
 
 ## Stack and architecture
 
@@ -91,15 +97,17 @@ npm run deploy
 
 `wrangler.jsonc` names the Worker **callback-hackathon**, binds its Durable Object namespace and embedding service, and serves `public/`. Its account ID identifies this deployment; use your own Cloudflare account ID when deploying a fork. Cloudflare's runtime services may incur normal usage charges. No managed vector database is needed.
 
-Static response headers restrict script, frame, and asset origins. Mutating requests and studio WebSockets require a matching origin. Cookies are HttpOnly, Secure in production, and SameSite=Lax. Overlay links are read-only bearer secrets, separate from the HttpOnly controller credential; resetting a link closes existing sockets. Disconnect revokes the Twitch token and clears the session's channel data.
+Static response headers restrict script, frame, and asset origins. Mutating requests and studio WebSockets require a matching origin. Cookies are HttpOnly, Secure in production, and SameSite=Lax. Overlay links are read-only bearer secrets, separate from the HttpOnly controller credential; resetting a link closes existing sockets. Disconnect revokes the Twitch token and clears the session's channel data. Changing broadcasters clears the old archive, disables automatic airing/chat posting, and revokes old overlay links. A final ownership gate also rejects foreign or unindexed clips at the moment of airing.
 
 ## Demo credit and playback
 
-The demo archive credits **[LIRIK](https://www.twitch.tv/lirik)**. Six public clip references were checked against [the public clip listing](https://www.twitchmetrics.net/c/23161357-lirik/clips). Titles, game categories, dates, and view counts are curated metadata snapshots; counts will change. Original clips remain on Twitch and belong to their creators. They are embedded, never copied or redistributed. The public demo archive is isolated from connected channels and never enters their live retrieval index.
+The demo archive credits **[LIRIK](https://www.twitch.tv/lirik)**. All six clips were fetched directly from Twitch Helix with ownership verified against broadcaster ID `23161357`. The committed snapshot includes API titles, creation timestamps, actual durations, original thumbnails, categories, view counts, and clip creators. Counts will change. Original clips remain on Twitch and belong to their creators. They are embedded, never copied or redistributed. The public demo archive is isolated from connected channels and never enters their live retrieval index.
 
-Autoplay, cookies, geographic restrictions, deleted clips, or host policy can affect embedded playback. Every callback includes a direct original clip link. Clip illustrations are labeled and do not stand in for claimed gameplay. For OBS, the source has a true transparent background and shows nothing between callbacks.
+Autoplay, cookies, geographic restrictions, deleted clips, or host policy can affect embedded playback. Every callback includes a direct original clip link. Clip illustrations are labeled and do not stand in for claimed gameplay. For OBS, the source has a true transparent background and shows nothing between callbacks. Actual OBS Studio 33.0.1 testing at 1920 × 1080 captured fully transparent idle/exit frames and a visible original Twitch clip on air. On this Mac, disabling OBS browser-source hardware acceleration resolved a blank browser renderer. See [the OBS verification record](docs/OBS_VERIFICATION.md).
 
 ## Screenshots
+
+![Actual OBS browser source on air](docs/screenshots/obs-callback.png)
 
 ![An original clip returns on air](docs/screenshots/clip-playback.png)
 
@@ -107,7 +115,7 @@ Autoplay, cookies, geographic restrictions, deleted clips, or host policy can af
 
 ## Submission materials
 
-[Submission fields, project description, and video outline](docs/SUBMISSION.md) are prepared, along with a [verification record](docs/VERIFICATION.md). A [73-second captioned replay walkthrough](docs/replay-walkthrough.mp4) is included with no audio or music. It demonstrates the public replay; the final submission video still needs a genuine live-channel segment and public YouTube upload.
+[Submission fields, project description, and video outline](docs/SUBMISSION.md) are prepared, along with a [verification record](docs/VERIFICATION.md). A [105-second captioned replay and actual OBS walkthrough](docs/replay-walkthrough.mp4) is included with no audio or music. A [standalone native OBS proof recording](docs/obs-overlay-proof.mp4) is also included. This footage demonstrates the public replay and real OBS browser-source playback; the final submission video still needs a genuine live-channel segment and public YouTube upload.
 
 ## Project workflow
 
