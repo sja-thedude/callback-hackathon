@@ -26,12 +26,11 @@ Open the demo, press **Let’s replay**, and watch the engine find a connection.
 
 ## Run from a clean clone
 
-Requires **Node.js 22 or newer**. The included `.nvmrc` selects Node 22.
+Requires **Node.js 22 or newer**. The included `.nvmrc` selects Node 22 if you use nvm.
 
 ```sh
 git clone https://github.com/sja-thedude/callback-hackathon.git
 cd callback-hackathon
-nvm use
 npm ci
 npm run dev
 ```
@@ -104,7 +103,11 @@ Autoplay, cookies, geographic restrictions, deleted clips, or host policy can af
 
 ![An original clip returns on air](docs/screenshots/clip-playback.png)
 
-![Dark studio on a phone](docs/screenshots/studio-dark-390.png)
+<img src="docs/screenshots/studio-dark-390.png" width="310" alt="Dark Callback studio on a phone">
+
+## Submission materials
+
+[Submission fields, project description, and video outline](docs/SUBMISSION.md) are prepared, along with a [verification record](docs/VERIFICATION.md). A [73-second captioned replay walkthrough](docs/replay-walkthrough.mp4) is included with no audio or music. It demonstrates the public replay; the final submission video still needs a genuine live-channel segment and public YouTube upload.
 
 ## Project workflow
 
