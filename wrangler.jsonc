@@ -1,11 +1,19 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "callback-hackathon",
+  "account_id": "60bc0d18ed5229edce6eb9712d7900d9",
   "main": "src/worker.js",
-  "compatibility_date": "2026-10-01",
-  "assets": { "directory": "./public", "binding": "ASSETS", "not_found_handling": "single-page-application", "run_worker_first": ["/api/*", "/auth/*"] },
-  "durable_objects": { "bindings": [{ "name": "STUDIO", "class_name": "Studio" }] },
+  "compatibility_date": "2026-05-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/auth/*"],
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "STUDIO", "class_name": "Studio" }],
+  },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Studio"] }],
   "ai": { "binding": "AI" },
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
 }
