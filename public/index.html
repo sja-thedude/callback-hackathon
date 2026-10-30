@@ -1,1 +1,664 @@
-<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Callback — your stream has a memory</title><body style="background:#f5f3ef;color:#292a27;font-family:system-ui;padding:10vw"><h1>Callback<span style="color:#ed6b4e">↶</span></h1><p>Your stream has a memory.</p><p>The live studio is coming online.</p></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f5f3ee" />
+    <meta
+      name="description"
+      content="Your stream has a memory. Callback finds the perfect moment from your past and brings it back, live. Try the account-free interactive replay."
+    />
+    <meta property="og:title" content="Callback — your stream has a memory" />
+    <meta
+      property="og:description"
+      content="Live moments. Shared history. Perfect timing."
+    />
+    <meta
+      property="og:image"
+      content="https://callback-hackathon.sja-affu765.workers.dev/assets/og.png"
+    />
+    <meta property="og:type" content="website" />
+    <title>Callback — Live studio</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&family=Instrument+Serif:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to studio</a>
+    <header class="topbar">
+      <a href="/" class="wordmark" aria-label="Callback home"
+        ><span class="brandmark">↶</span>callback<span class="brand-dot"
+          >.</span
+        ></a
+      >
+      <nav aria-label="Main navigation">
+        <button class="nav-item active" data-view="studio">Studio</button
+        ><button class="nav-item" data-view="library">
+          Clip library<span class="nav-count">6</span></button
+        ><button class="nav-item" data-view="overlay">Overlay</button
+        ><button class="nav-item" data-view="guide">
+          How it works <span class="tiny-arrow">↗</span>
+        </button>
+      </nav>
+      <div class="top-actions">
+        <span class="workspace"
+          ><span class="status-dot"></span> Demo workspace</span
+        ><button
+          id="theme"
+          class="icon-button"
+          aria-label="Switch color theme"
+          title="Switch color theme"
+        ></button
+        ><button class="button connect-button" id="connect">
+          <span class="connect-icon">⌁</span> Connect Twitch <span>↗</span>
+        </button>
+      </div>
+      <button
+        class="icon-button mobile-menu"
+        id="menu"
+        aria-label="Toggle navigation"
+      >
+        ☰
+      </button>
+    </header>
+    <main id="main">
+      <section class="page-heading">
+        <div>
+          <div class="eyebrow">
+            <span class="small-line"></span> THE LIVE CALLBACK ENGINE
+          </div>
+          <h1>Your stream has a <em>memory.</em></h1>
+          <p>Bring back the right moment. Right when it matters.</p>
+        </div>
+        <div class="heading-actions">
+          <span class="demo-label"
+            ><span class="status-dot"></span> INTERACTIVE DEMO</span
+          ><button class="button button-white" id="open-settings">
+            <span data-icon="sliders"></span> Engine settings
+          </button>
+        </div>
+      </section>
+      <div class="demo-banner">
+        <div class="banner-icon" data-icon="spark"></div>
+        <p>
+          <strong>A little déjà vu, on demand.</strong
+          ><span>
+            Watch a scripted chat replay find real moments from LIRIK’s archive.
+            No account needed.</span
+          >
+        </p>
+        <button id="demo-info">About this demo <span>↗</span></button>
+      </div>
+      <section id="studio-view" class="view active">
+        <div class="studio-grid">
+          <div class="broadcast-column">
+            <article class="panel preview-panel">
+              <div class="panel-heading">
+                <div class="panel-title">
+                  <span data-icon="monitor"></span> Stream preview
+                  <span class="tag">DEMO</span>
+                </div>
+                <button
+                  class="subtle-button"
+                  id="expand-preview"
+                  title="Open overlay preview"
+                  aria-label="Open overlay preview"
+                >
+                  <span data-icon="expand"></span>
+                </button>
+              </div>
+              <div class="stage" id="stage">
+                <img
+                  class="stage-landscape"
+                  src="/assets/landscape.svg"
+                  alt="Original illustrated mountain landscape used as the demo stream backdrop"
+                  width="1280"
+                  height="720"
+                />
+                <div class="stage-vignette"></div>
+                <div class="stage-top">
+                  <span class="onair"
+                    ><span class="status-dot"></span> DEMO REPLAY</span
+                  ><span class="stage-clock">00:00</span>
+                </div>
+                <div class="scene-label">
+                  <span class="scene-live-dot"></span
+                  ><span>the cozy corner</span
+                  ><small>Illustrated stream · not a live broadcast</small>
+                </div>
+                <div class="stage-center" id="stage-idle">
+                  <div class="orbit-mark">↶</div>
+                  <p>A good moment is coming back.</p>
+                  <span>Start the replay. Let chat do its thing.</span
+                  ><button class="stage-cta" id="stage-play">
+                    Let’s replay <span>↗</span>
+                  </button>
+                </div>
+                <div
+                  id="callback-card"
+                  class="callback-card"
+                  aria-live="polite"
+                ></div>
+                <div class="stage-bottom">
+                  <span
+                    ><span class="keycap">↶</span> callback is listening</span
+                  ><span class="stage-sound"
+                    >Muted preview <span data-icon="volume"></span
+                  ></span>
+                </div>
+              </div>
+              <div class="preview-footer">
+                <div class="avatar">L</div>
+                <div>
+                  <strong id="channel-name">LIRIK’s archive</strong
+                  ><span id="channel-detail"
+                    >6 real clips <span>·</span> 4 replay scenarios</span
+                  >
+                </div>
+                <a
+                  class="source-link"
+                  href="https://www.twitch.tv/lirik"
+                  target="_blank"
+                  rel="noreferrer"
+                  >View channel <span>↗</span></a
+                >
+              </div>
+            </article>
+            <article class="panel replay-panel">
+              <div class="replay-top">
+                <div>
+                  <div class="eyebrow">THE REPLAY ROOM</div>
+                  <h2>Let’s make a callback.</h2>
+                </div>
+                <span class="replay-length">~ 45 seconds / scene</span>
+              </div>
+              <div class="scenario-row">
+                <label for="scenario">Scenario</label>
+                <div class="select-wrap">
+                  <select id="scenario">
+                    <option value="0">01 — History repeats itself</option>
+                    <option value="1">02 — The community remembers</option>
+                    <option value="2">03 — A very expensive memory</option>
+                    <option value="3">04 — Back in the loop</option></select
+                  ><span>⌄</span>
+                </div>
+                <button
+                  class="icon-button reset-button"
+                  id="reset"
+                  title="Restart replay"
+                  aria-label="Restart replay"
+                >
+                  <span data-icon="reset"></span></button
+                ><button class="button primary" id="play">
+                  <span data-icon="play"></span> Start replay
+                </button>
+              </div>
+              <div class="replay-timeline">
+                <div class="timeline-track">
+                  <div id="timeline-progress"></div>
+                  <span
+                    class="timeline-marker"
+                    style="left: 58%"
+                    title="A distinctive phrase emerges"
+                  ></span>
+                </div>
+                <div class="timeline-labels">
+                  <span id="replay-time">00:00</span
+                  ><span class="timeline-hint"
+                    ><i></i> The moment chat remembers</span
+                  ><span>00:45</span>
+                </div>
+              </div>
+              <div class="replay-bottom">
+                <span
+                  ><span class="status-dot quiet"></span>
+                  <span id="replay-status">Ready when you are</span></span
+                >
+                <div class="speed-control" aria-label="Replay speed">
+                  <button class="active" data-speed="1">1×</button
+                  ><button data-speed="2">2×</button
+                  ><button data-speed="4">4×</button>
+                </div>
+              </div>
+            </article>
+          </div>
+          <aside class="signals-column">
+            <article class="panel engine-panel">
+              <div class="panel-heading">
+                <div class="panel-title">
+                  <span class="status-dot"></span> Callback engine
+                </div>
+                <span class="engine-pill" id="engine-status">Ready</span>
+              </div>
+              <div class="engine-body">
+                <div class="engine-symbol">
+                  <span>↶</span><i></i><i></i><i></i>
+                </div>
+                <h3 id="engine-title">Waiting for a familiar feeling</h3>
+                <p id="engine-description">
+                  Chat brings the context.<br />Your archive brings the
+                  memories.
+                </p>
+                <div
+                  class="signal-bars"
+                  id="signal-bars"
+                  aria-label="Chat activity visualization"
+                ></div>
+                <div class="engine-meta">
+                  <span><i class="mini-dot"></i> Semantic matching</span
+                  ><span id="confidence-hint">72% min. confidence</span>
+                </div>
+              </div>
+              <div id="candidate" class="candidate hidden"></div>
+            </article>
+            <article class="panel chat-panel">
+              <div class="panel-heading">
+                <div class="panel-title">
+                  <span data-icon="chat"></span> Chat replay
+                </div>
+                <span class="chat-rate"
+                  ><span class="status-dot quiet"></span>
+                  <span id="chat-rate">0</span> msg / min</span
+                >
+              </div>
+              <div
+                class="chat-log"
+                id="chat-log"
+                role="log"
+                aria-label="Replayed chat messages"
+                aria-live="off"
+              >
+                <div class="chat-empty">
+                  <span data-icon="chat"></span>
+                  <p>The usual suspects.<br />The same great memories.</p>
+                  <small>Chat appears when the replay starts.</small>
+                </div>
+              </div>
+              <div class="chat-footer">
+                <span class="mini-dot"></span> Scripted chat. Real community
+                moments.
+              </div>
+            </article>
+          </aside>
+        </div>
+        <div class="stats-grid">
+          <article class="stat-card">
+            <div>
+              <span>Memories indexed</span><span data-icon="layers"></span>
+            </div>
+            <strong id="stat-clips">6<span>clips</span></strong>
+            <p>
+              <span class="mini-dot green"></span> Your archive, ready to
+              remember
+            </p>
+          </article>
+          <article class="stat-card">
+            <div>
+              <span>Callbacks this session</span><span data-icon="reset"></span>
+            </div>
+            <strong id="stat-callbacks">0<span>moments</span></strong>
+            <p id="stat-last">The next inside joke starts here</p>
+          </article>
+          <article class="stat-card">
+            <div>
+              <span>Match confidence</span><span data-icon="spark"></span>
+            </div>
+            <strong id="stat-confidence"
+              >—<span>waiting for a match</span></strong
+            >
+            <p>Only the connections worth making</p>
+          </article>
+          <article class="stat-card">
+            <div>
+              <span>Cooldown protection</span><span data-icon="shield"></span>
+            </div>
+            <strong id="stat-cooldown">3<span>minutes</span></strong>
+            <p>
+              <span class="mini-dot green"></span> A little restraint. A lot
+              more magic.
+            </p>
+          </article>
+        </div>
+        <details class="panel memory-trail" id="memory-trail">
+          <summary>
+            <span class="trail-icon">↶</span
+            ><span
+              ><strong>The memory trail</strong
+              ><small
+                >Every connection has a story. Here’s this session’s.</small
+              ></span
+            ><span class="trail-count" id="trail-count">0 moments</span
+            ><span class="trail-chevron">⌄</span>
+          </summary>
+          <div class="trail-body">
+            <div id="trail-list">
+              <div class="trail-empty">
+                <span>↶</span>
+                <p>Your first callback starts the story.</p>
+                <small
+                  >Start a replay to see the evidence behind each moment.</small
+                >
+              </div>
+            </div>
+            <button class="button button-white" id="export-session">
+              Export session evidence ↗
+            </button>
+          </div>
+        </details>
+        <div class="bottom-strip">
+          <div class="strip-copy">
+            <span class="strip-symbol">↶</span>
+            <div>
+              <h3>The overlay is where the magic happens.</h3>
+              <p>One browser source. A whole lot of “remember when.”</p>
+            </div>
+          </div>
+          <button class="button button-white" id="setup-overlay">
+            Set up your overlay <span>↗</span>
+          </button>
+        </div>
+      </section>
+      <section id="library-view" class="view" hidden>
+        <div class="section-header">
+          <div>
+            <div class="eyebrow">THE MEMORY BANK</div>
+            <h2>Good moments, kept close.</h2>
+            <p id="library-subtitle">
+              Six real clips from LIRIK’s public archive. Demo use only.
+            </p>
+          </div>
+          <button class="button primary" id="index-clips">
+            <span data-icon="layers"></span> Index my clips
+          </button>
+        </div>
+        <div class="library-tools">
+          <div class="search-field">
+            <span data-icon="search"></span
+            ><input
+              id="library-search"
+              type="search"
+              aria-label="Search clip memories"
+              placeholder="Search a memory, game, or phrase…"
+            />
+          </div>
+          <label class="sr-only" for="category-filter">Filter by game</label
+          ><select id="category-filter">
+            <option value="">All categories</option>
+          </select>
+        </div>
+        <div id="index-progress" class="index-progress hidden">
+          <div class="skeleton"></div>
+          <strong>Fetching your clips…</strong
+          ><progress max="100" value="0"></progress>
+        </div>
+        <div class="library-grid" id="library-grid"></div>
+        <div class="source-note">
+          <span data-icon="shield"></span>
+          <p>
+            In live mode, only clips from your own connected channel can be
+            indexed or aired. The public demo archive stays separate.
+          </p>
+        </div>
+      </section>
+      <section id="overlay-view" class="view" hidden>
+        <div class="section-header">
+          <div>
+            <div class="eyebrow">THE HERO MOMENT</div>
+            <h2>A memory. Made for the screen.</h2>
+            <p>
+              A transparent browser source that stays invisible until the
+              perfect moment.
+            </p>
+          </div>
+          <button class="button primary" id="test-overlay">
+            <span data-icon="play"></span> Preview a callback
+          </button>
+        </div>
+        <div class="overlay-layout">
+          <article class="panel overlay-demo">
+            <div class="checkerboard">
+              <div id="overlay-sample"></div>
+              <div class="overlay-empty">
+                <span>↶</span>
+                <p>Your overlay lives here.</p>
+                <small>Preview a callback to see it in action.</small>
+              </div>
+            </div>
+            <div class="preview-footer">
+              <span class="status-dot"></span
+              ><strong>OBS-compatible · 1920 × 1080</strong
+              ><span class="tag">TRANSPARENT</span>
+            </div>
+          </article>
+          <article class="panel setup-card">
+            <span class="step-number">01</span>
+            <h3>Copy your browser source</h3>
+            <p>
+              This private link connects the overlay to this studio. Keep it to
+              yourself.
+            </p>
+            <div class="url-field">
+              <input
+                id="overlay-url"
+                readonly
+                aria-label="Private OBS browser source URL"
+              /><button
+                class="icon-button"
+                id="copy-overlay"
+                aria-label="Copy overlay URL"
+              >
+                <span data-icon="copy"></span>
+              </button>
+            </div>
+            <span class="step-number">02</span>
+            <h3>Add it to OBS</h3>
+            <p>
+              In Sources, choose <strong>Browser</strong>. Paste your link. Set
+              width to <strong>1920</strong> and height to
+              <strong>1080</strong>.
+            </p>
+            <span class="step-number">03</span>
+            <h3>Let the moment find you</h3>
+            <p>
+              Keep this studio open. A strong connection brings the old clip in,
+              then quietly takes it away.
+            </p>
+            <div class="setup-actions">
+              <a
+                class="button button-white"
+                id="open-overlay"
+                href="/overlay"
+                target="_blank"
+                rel="noreferrer"
+                >Open overlay <span>↗</span></a
+              ><button class="subtle-button" id="rotate-overlay">
+                Reset private link
+              </button>
+            </div>
+          </article>
+        </div>
+      </section>
+      <section id="guide-view" class="view" hidden>
+        <div class="section-header">
+          <div>
+            <div class="eyebrow">BUILT FOR THE “REMEMBER WHEN”</div>
+            <h2>History has incredible timing.</h2>
+            <p>
+              The best inside jokes don’t need a script. They need a memory.
+            </p>
+          </div>
+        </div>
+        <div class="guide-grid">
+          <article class="panel guide-card">
+            <span class="guide-number">01 / REMEMBER</span>
+            <div class="guide-art"><span data-icon="layers"></span></div>
+            <h3>Your archive, searchable by feeling.</h3>
+            <p>
+              Connect your channel and choose to index your clips. Titles and
+              game categories become semantic vectors. Your library stays yours.
+            </p>
+          </article>
+          <article class="panel guide-card">
+            <span class="guide-number">02 / RECOGNIZE</span>
+            <div class="guide-art"><span data-icon="spark"></span></div>
+            <h3>Listen for a familiar moment.</h3>
+            <p>
+              A rolling chat window looks for a distinctive connection. Multiple
+              independent voices, a confidence threshold, and a clear match all
+              have to agree.
+            </p>
+          </article>
+          <article class="panel guide-card">
+            <span class="guide-number">03 / BRING IT BACK</span>
+            <div class="guide-art"><span>↶</span></div>
+            <h3>Let the community connect the dots.</h3>
+            <p>
+              The original clip arrives on your overlay with its date and the
+              connection. Cooldowns and duplicate protection give each callback
+              room to land.
+            </p>
+          </article>
+        </div>
+        <article class="panel demo-explainer">
+          <div>
+            <div class="eyebrow">ABOUT THE DEMO</div>
+            <h3>Real memories. A rehearsed conversation.</h3>
+            <p>
+              The replay chat is written for this demo and runs at a steady,
+              visible pace. The six clip links belong to LIRIK and play through
+              the original host. Illustrated artwork is original to Callback and
+              is not gameplay footage.
+            </p>
+            <p>
+              The demo uses local concept-assisted vector retrieval so it works
+              without sign-in. Connected live channels use server-side neural
+              embeddings. Demo time is compressed; live cooldowns are at least
+              one minute.
+            </p>
+          </div>
+          <a
+            href="https://www.twitch.tv/lirik"
+            target="_blank"
+            rel="noreferrer"
+            class="credit-card"
+            ><span class="credit-avatar">L</span
+            ><span
+              >Demo archive credit<strong>LIRIK</strong
+              ><small
+                >All original clips belong to their creators. ↗</small
+              ></span
+            ></a
+          >
+        </article>
+      </section>
+      <footer>
+        <a href="/" class="footer-brand">↶ callback<span>.</span></a
+        ><span>For the moments that become <em>our</em> moments.</span
+        ><a
+          href="https://github.com/sja-thedude/callback-hackathon"
+          target="_blank"
+          rel="noreferrer"
+          >Built for the community <span>↗</span></a
+        >
+      </footer>
+    </main>
+    <dialog id="settings-dialog">
+      <form method="dialog" class="dialog-content">
+        <div class="dialog-heading">
+          <div>
+            <div class="eyebrow">MAKE IT YOURS</div>
+            <h2>A sense of timing.</h2>
+          </div>
+          <button class="icon-button" aria-label="Close settings">×</button>
+        </div>
+        <p>Let the right memories through. Give each one room to land.</p>
+        <label class="slider-label" for="threshold"
+          >Match confidence <output id="threshold-output">72%</output></label
+        ><input id="threshold" type="range" min="60" max="95" value="72" />
+        <div class="range-captions">
+          <span>More connections</span><span>Only the unmistakable</span>
+        </div>
+        <label class="slider-label" for="cooldown"
+          >Time between callbacks
+          <output id="cooldown-output">3 minutes</output></label
+        ><input
+          id="cooldown"
+          type="range"
+          min="60"
+          max="600"
+          step="30"
+          value="180"
+        />
+        <div class="range-captions">
+          <span>1 minute</span><span>10 minutes</span>
+        </div>
+        <label class="slider-label" for="duration"
+          >Time on screen
+          <output id="duration-output">20 seconds</output></label
+        ><input id="duration" type="range" min="10" max="45" value="20" /><label
+          class="switch-row"
+          ><span
+            ><strong>Automatic callbacks</strong
+            ><small>Air a match when every safety check passes.</small></span
+          ><input id="auto-fire" type="checkbox" role="switch" /><span
+            class="switch-visual"
+          ></span></label
+        ><label class="switch-row"
+          ><span
+            ><strong>Share the clip in chat</strong
+            ><small
+              >Post the original link after a live callback airs.</small
+            ></span
+          ><input id="chat-bot" type="checkbox" role="switch" /><span
+            class="switch-visual"
+          ></span
+        ></label>
+        <p class="settings-note">
+          Replay scenarios automatically air qualifying matches. Live mode
+          starts with manual approval.
+        </p>
+        <div class="dialog-actions">
+          <button class="button button-white">Cancel</button
+          ><button class="button primary" type="button" id="save-settings">
+            Save settings <span>↗</span>
+          </button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="connect-dialog">
+      <div class="dialog-content">
+        <div class="dialog-heading">
+          <div class="eyebrow">YOUR CHANNEL. YOUR HISTORY.</div>
+          <button
+            class="icon-button"
+            id="close-connect"
+            aria-label="Close connection dialog"
+          >
+            ×
+          </button>
+        </div>
+        <div class="connect-illustration">↶<span data-icon="chat"></span></div>
+        <h2>Give your stream a memory.</h2>
+        <p id="connect-description">
+          Connect your Twitch account to index your own clips, listen to your
+          chat, and bring callbacks to your stream.
+        </p>
+        <div id="connect-state"></div>
+        <div class="permission-note">
+          <span data-icon="shield"></span
+          ><span
+            >Your credentials stay on the server.<br />You choose when clips get
+            indexed and aired.</span
+          >
+        </div>
+      </div>
+    </dialog>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>
