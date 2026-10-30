@@ -27,6 +27,11 @@ export default {
     try {
       if (url.pathname === "/api/health")
         return json({ ok: true, service: "callback", version: "1.0.0" });
+      if (url.pathname === "/overlay" || url.pathname === "/overlay/") {
+        return env.ASSETS.fetch(
+          new Request(new URL("/overlay.html", url.origin), request),
+        );
+      }
       if (
         !url.pathname.startsWith("/api/") &&
         !url.pathname.startsWith("/auth/")
@@ -49,9 +54,15 @@ export default {
           embedding: "@cf/baai/bge-small-en-v1.5",
         });
       const overlay = url.pathname === "/api/overlay";
+      const sessionParts = (
+        readCookie(request, "callback_session") || ""
+      ).split(".");
+      let controlKey = sessionParts[1];
       let id = overlay
         ? url.searchParams.get("room")
-        : readCookie(request, "callback_session");
+        : /^[a-f0-9-]{36}$/.test(controlKey || "")
+          ? sessionParts[0]
+          : null;
       let fresh = false;
       try {
         if (id) env.STUDIO.idFromString(id);
@@ -68,18 +79,25 @@ export default {
             401,
           );
         id = env.STUDIO.newUniqueId().toString();
+        controlKey = crypto.randomUUID();
         fresh = true;
       }
       const stub = env.STUDIO.get(env.STUDIO.idFromString(id));
       const headers = new Headers(request.headers);
       headers.set("X-Studio-ID", id);
       headers.set("X-Public-Origin", url.origin);
+      headers.delete("X-Control-Key");
+      if (!overlay) headers.set("X-Control-Key", controlKey);
       const response = await stub.fetch(new Request(request, { headers }));
       if (fresh && response.status !== 101) {
         const next = new Response(response.body, response);
         next.headers.append(
           "Set-Cookie",
-          cookie("callback_session", id, url.protocol === "https:"),
+          cookie(
+            "callback_session",
+            `${id}.${controlKey}`,
+            url.protocol === "https:",
+          ),
         );
         return next;
       }
@@ -245,6 +263,24 @@ export class Studio {
           return json({ ok: true, settings: this.data.settings });
         return this.socket();
       }
+      const controlKey = request.headers.get("X-Control-Key");
+      if (!controlKey)
+        return json(
+          { error: "Open this action from your private studio." },
+          403,
+        );
+      if (!this.data.controlKey) {
+        this.data.controlKey = controlKey;
+        await this.save();
+      }
+      if (controlKey !== this.data.controlKey)
+        return json(
+          {
+            error:
+              "This studio credential is invalid. Open your original studio.",
+          },
+          403,
+        );
       if (path === "/api/socket") {
         if (request.headers.get("Upgrade") !== "websocket")
           return json({ error: "WebSocket required" }, 400);
@@ -345,6 +381,7 @@ export class Studio {
           }).catch(() => {});
         }
         this.data = {
+          controlKey: this.data.controlKey,
           settings: this.data.settings,
           clips: [],
           history: [],

@@ -176,7 +176,7 @@ async function overlayMode() {
   }
   connect();
 }
-if (location.pathname === "/overlay" || location.pathname === "/overlay/") {
+if (["/overlay", "/overlay/", "/overlay.html"].includes(location.pathname)) {
   overlayMode();
 } else {
   startStudio();
@@ -503,6 +503,11 @@ function startStudio() {
       state.history.length +
       " moment" +
       (state.history.length === 1 ? "" : "s");
+    if (!state.history.length) {
+      list.innerHTML =
+        '<div class="trail-empty"><span>↶</span><p>Your first callback starts the story.</p><small>Strong connections will leave their evidence here.</small></div>';
+      return;
+    }
     list.innerHTML = state.history
       .map(
         (c) =>
@@ -857,6 +862,27 @@ function startStudio() {
     resetReplay();
     state.mode = "live";
     state.clips = state.session.clips || [];
+    state.history = (state.session.history || []).map((moment) => ({
+      ...moment,
+      source: "live",
+    }));
+    renderTrail();
+    $("#stat-callbacks").innerHTML =
+      state.history.length + "<span>moments</span>";
+    if (state.history.length) {
+      $("#stat-confidence").innerHTML =
+        Math.round(state.history[0].score * 100) +
+        "<span>% semantic similarity</span>";
+      $("#stat-last").textContent =
+        "Last callback · " +
+        new Date(state.history[0].at).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+    } else {
+      $("#stat-confidence").innerHTML = "—<span>waiting for a match</span>";
+      $("#stat-last").textContent = "The next inside joke starts here";
+    }
     state.settings = { ...state.settings, ...state.session.settings };
     document.body.classList.add("live-mode");
     $(".workspace").innerHTML =

@@ -9,7 +9,16 @@ const context = await browser.newContext({
 });
 const page = await context.newPage();
 const errors = [];
-page.on("pageerror", (e) => errors.push(e.message));
+page.on("pageerror", (e) => {
+  if (
+    /https:\/\/(?:[\w-]+\.)*(?:twitch\.tv|twitchcdn\.net|jtvnw\.net)\//.test(e.stack || "") ||
+    e.message === "getLayoutMap() must be called from a top-level browsing context or allowed by the permission policy."
+  ) {
+    console.log("External player notice:", e.message);
+    return;
+  }
+  errors.push(e.message);
+});
 await mkdir("docs/screenshots", { recursive: true });
 try {
   await page.goto(url);
@@ -39,6 +48,9 @@ try {
   });
   console.log("PASS replay produces the intended callback");
   const overlayURL = await page.locator("#overlay-url").inputValue();
+  const overlayHTML = await (await page.request.get(overlayURL)).text();
+  assert.match(overlayHTML, /class="overlay-only"/);
+  assert.ok(!overlayHTML.includes("Your stream has a"));
   const overlay = await context.newPage();
   await overlay.goto(overlayURL);
   await overlay.waitForTimeout(1500);
@@ -106,6 +118,47 @@ try {
     }
   }
   console.log("PASS every screen in light/dark at 1440px and 390px");
+  await page.locator("#menu").click();
+  await page.locator('[data-view="studio"]').click();
+  for (const selector of [
+    "#theme",
+    "#menu",
+    "#connect",
+    "#open-settings",
+    "#stage-play",
+    "#play",
+    "#reset",
+    ".speed-control button",
+  ]) {
+    for (const control of await page.locator(selector).all()) {
+      const box = await control.boundingBox();
+      assert.ok(
+        box.width >= 44 && box.height >= 44,
+        `44px target: ${selector}`,
+      );
+    }
+  }
+  await page.locator("#scenario").selectOption("1");
+  await page.locator('[data-speed="4"]').click();
+  await page.locator("#play").click();
+  await page.locator("#callback-card.airing").waitFor({ timeout: 15000 });
+  await page.waitForTimeout(650);
+  const stageBox = await page.locator("#stage").boundingBox();
+  const cardBox = await page.locator("#callback-card").boundingBox();
+  assert.ok(
+    cardBox.y >= stageBox.y &&
+      cardBox.y + cardBox.height <= stageBox.y + stageBox.height,
+    "Phone callback fits in the preview",
+  );
+  await page
+    .locator("#stage")
+    .screenshot({
+      path: "docs/screenshots/callback-phone.png",
+      animations: "disabled",
+    });
+  console.log(
+    "PASS phone callback stays in-frame and primary controls have 44px tap targets",
+  );
   await page.locator("#connect").click();
   await page.waitForFunction(() =>
     document
@@ -115,6 +168,51 @@ try {
   assert.match(await page.locator("#connect-state").innerText(), /credentials/);
   await page.locator("#close-connect").click();
   console.log("PASS unconfigured Twitch has actionable setup state");
+  const live = await context.newPage();
+  await live.setViewportSize({ width: 390, height: 844 });
+  await live.route("**/api/session", async (route) => {
+    const response = await route.fetch();
+    const session = await response.json();
+    const clip = {
+      id: "owner-memory",
+      title: "Our shared memory",
+      category: "Our game",
+      date: "2026-10-01",
+      views: 50,
+      score: 0.88,
+      reason: "Three viewers remembered this moment.",
+      at: Date.now(),
+    };
+    await route.fulfill({
+      response,
+      json: {
+        ...session,
+        user: { id: "owner", name: "Owner", login: "owner" },
+        clips: [clip],
+        history: [clip],
+      },
+    });
+  });
+  await live.goto(url);
+  await live.waitForFunction(() =>
+    document.querySelector("#stat-callbacks").textContent.startsWith("1"),
+  );
+  await live.locator("#memory-trail summary").click();
+  assert.match(
+    await live.locator("#trail-list").innerText(),
+    /Our shared memory/,
+  );
+  await live.locator("#menu").click();
+  await live.locator('[data-view="library"]').click();
+  assert.equal(await live.locator(".clip-card").count(), 1);
+  assert.match(
+    await live.locator(".clip-card").innerText(),
+    /Our shared memory/,
+  );
+  console.log(
+    "PASS live workspace restores its own library and history (mocked session)",
+  );
+  await live.close();
   assert.deepEqual(errors, []);
   console.log("PASS no application JavaScript errors");
 } finally {

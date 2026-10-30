@@ -3202,3 +3202,101 @@ input[type="range"] {
 .primary:hover {
   background: var(--button-accent-hover);
 }
+@media (max-width: 700px) {
+  .topbar {
+    gap: 6px;
+  }
+  .topbar .wordmark {
+    font-size: 25px;
+  }
+  .top-actions {
+    gap: 2px;
+  }
+  .top-actions .icon-button,
+  .mobile-menu {
+    min-width: 44px;
+    width: 44px;
+    min-height: 44px;
+  }
+  .top-actions .connect-button,
+  .heading-actions .button {
+    min-height: 44px;
+  }
+  .speed-control button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .demo-banner button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .source-link {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .subtle-button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  footer a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+}
+.wordmark {
+  min-height: 44px;
+}
+.callback-play {
+  width: 44px;
+  height: 44px;
+}
+@media (max-width: 700px) {
+  .search-field input {
+    min-height: 44px;
+  }
+  .reset-button {
+    min-width: 44px;
+    width: 44px;
+  }
+  .stage .callback-card {
+    width: calc(100% - 24px);
+    max-width: 350px;
+    left: 12px;
+    bottom: 20px;
+  }
+  .stage .callback-image {
+    height: 65px;
+    aspect-ratio: auto;
+  }
+  .stage .callback-card .callback-top {
+    padding: 6px 10px;
+  }
+  .stage .callback-card .callback-detail {
+    padding: 7px 10px;
+  }
+  .stage .callback-card .callback-detail h3 {
+    font-size: 17px;
+    line-height: 1.12;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+  .stage .callback-card .callback-detail p {
+    font-size: 8px;
+    line-height: 1.5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .stage .callback-detail a {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    margin-top: 0;
+    font-size: 9px;
+  }
+}

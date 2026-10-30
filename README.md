@@ -11,11 +11,11 @@ Open the demo, press **Let’s replay**, and watch the engine find a connection.
 ## What works
 
 - Four scripted replay scenarios against six real, credited public clips. Pause, rewind, change speed, and inspect the result.
-- Transparent OBS browser source with an animated entrance, original clip player, date, connection, progress bar, and exit.
+- Dedicated transparent OBS page, invisible even during startup, with an animated entrance, original clip player, date, connection, progress bar, and exit.
 - Server-synchronized overlays, including overlays opened on another device. Private overlay links can be rotated.
 - Searchable clip library with category filters, original clip playback, and overlay previews.
 - Adjustable confidence, cooldown, screen duration, automatic airing, and chat posting.
-- Candidate reasoning, manual approval, veto, session history, and downloadable evidence.
+- Candidate reasoning, manual approval, veto, session history restored on refresh, and downloadable evidence.
 - Light, dark, and system themes; responsive layouts checked at 390px; keyboard focus and reduced-motion support.
 - Twitch authorization-code flow, expiring state, server-only credentials, token refresh, and disconnect/revocation.
 - Own-channel Helix indexing with progress, up to 500 clips per index operation, category resolution, neural embeddings, and durable vector storage.
@@ -91,7 +91,7 @@ npm run deploy
 
 `wrangler.jsonc` names the Worker **callback-hackathon**, binds its Durable Object namespace and embedding service, and serves `public/`. Its account ID identifies this deployment; use your own Cloudflare account ID when deploying a fork. Cloudflare's runtime services may incur normal usage charges. No managed vector database is needed.
 
-Static response headers restrict script, frame, and asset origins. Mutating requests and studio WebSockets require a matching origin. Cookies are HttpOnly, Secure in production, and SameSite=Lax. Overlay links are bearer secrets; resetting a link closes existing sockets. Disconnect revokes the Twitch token and clears the session's channel data.
+Static response headers restrict script, frame, and asset origins. Mutating requests and studio WebSockets require a matching origin. Cookies are HttpOnly, Secure in production, and SameSite=Lax. Overlay links are read-only bearer secrets, separate from the HttpOnly controller credential; resetting a link closes existing sockets. Disconnect revokes the Twitch token and clears the session's channel data.
 
 ## Demo credit and playback
 

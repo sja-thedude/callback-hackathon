@@ -7,8 +7,9 @@
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
+    "html_handling": "none",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*", "/auth/*"],
+    "run_worker_first": ["/api/*", "/auth/*", "/overlay", "/overlay/"],
   },
   "durable_objects": {
     "bindings": [{ "name": "STUDIO", "class_name": "Studio" }],
