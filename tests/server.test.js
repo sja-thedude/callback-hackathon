@@ -42,6 +42,7 @@ const req = (path, body) =>
     headers: {
       "X-Public-Origin": "https://callback.example",
       "X-Studio-ID": "studio",
+      "X-Control-Key": "test-controller-credential",
       "Content-Type": "application/json",
     },
     ...(body ? { body: JSON.stringify(body) } : {}),
@@ -73,6 +74,7 @@ test("public session never returns OAuth credentials or vectors", async () => {
   const r = await room.fetch(req("/api/session"));
   const text = await r.text();
   assert.ok(!text.includes("private-test"));
+  assert.ok(!text.includes("test-controller-credential"));
   assert.equal(JSON.parse(text).clips[0].vector, undefined);
 });
 test("settings enforce confidence, cooldown and screen-time bounds", async () => {
@@ -179,4 +181,19 @@ test("manual fire rejects stale candidates", async () => {
   const response = await room.fetch(req("/api/fire", { id: "old" }));
   assert.equal(response.status, 409);
   assert.equal(room.data.history.length, 0);
+});
+
+test("overlay information cannot authorize studio control, including after disconnect", async () => {
+  const { room } = await studio();
+  await room.fetch(req("/api/session"));
+  const forged = req("/api/settings", { autoFire: true });
+  forged.headers.set("X-Control-Key", room.data.overlayKey);
+  assert.equal((await room.fetch(forged)).status, 403);
+  const missing = req("/api/session");
+  missing.headers.delete("X-Control-Key");
+  assert.equal((await room.fetch(missing)).status, 403);
+  assert.equal(room.data.settings.autoFire, false);
+  await room.fetch(req("/api/disconnect", {}));
+  assert.equal(room.data.controlKey, "test-controller-credential");
+  assert.equal((await room.fetch(forged)).status, 403);
 });
