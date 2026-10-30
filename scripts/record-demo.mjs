@@ -27,7 +27,7 @@ async function caption(step, headline, note = "") {
           "position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1000;width:calc(100% - 100px);max-width:1100px;padding:18px 26px;border-radius:12px;background:#232b23f5;color:#f6f2e5;box-shadow:0 10px 50px #0003;font-family:system-ui;border:1px solid #ffffff26;pointer-events:none;";
         document.body.append(el);
       }
-      const host = document.querySelector('dialog[open]') || document.body;
+      const host = document.querySelector("dialog[open]") || document.body;
       if (el.parentElement !== host) host.append(el);
       el.replaceChildren();
       const label = document.createElement("div");
@@ -81,6 +81,13 @@ await caption(
   "Clip playback is embedded from its original host. The forest backdrop is original illustration.",
 );
 await pause(8500);
+await page.locator("#director-desk").scrollIntoViewIfNeeded();
+await caption(
+  "04 / EXPLAINABLE RETRIEVAL",
+  "See the alternatives. See why this one earned airtime.",
+  "Three neural candidates, the separation between them, and explicit safety gates.",
+);
+await pause(6500);
 await page.locator("#memory-trail summary").click();
 await page.locator("#memory-trail").scrollIntoViewIfNeeded();
 await caption(
@@ -122,13 +129,13 @@ await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
 await caption(
   "08 / BUILT IN CODEX",
   "Built in one Codex thread, from the first branch to Cloudflare.",
-  "Product, retrieval, backend, original visuals, 14 tests, browser verification, and deployment.",
+  "Product, neural retrieval, backend, original visuals, 19 tests, real OBS verification, and deployment.",
 );
 await pause(6500);
 await caption(
   "CALLBACK / TRY IT",
   "callback-hackathon.sja-affu765.workers.dev",
-  "Live Twitch requires app credentials and broadcaster authorization. The account-free replay is ready now.",
+  "The app is configured. Live retrieval needs an authorized channel with saved clips. The replay is ready now.",
 );
 await pause(6500);
 const video = page.video();

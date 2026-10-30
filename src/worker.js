@@ -1,4 +1,5 @@
 import { rank, decision, tokens } from "../public/engine.js";
+import { retrieveDemo } from "./demo.js";
 const json = (data, status = 200) =>
   Response.json(data, {
     status,
@@ -53,6 +54,8 @@ export default {
           ),
           embedding: "@cf/baai/bge-small-en-v1.5",
         });
+      if (url.pathname === "/api/demo/search")
+        return retrieveDemo(request, env);
       const overlay = url.pathname === "/api/overlay";
       const sessionParts = (
         readCookie(request, "callback_session") || ""
@@ -113,6 +116,7 @@ export class Studio {
     this.state = state;
     this.env = env;
     this.sockets = new Set();
+    this.socketRoles = new Map();
     this.busy = false;
     this.lastIngest = 0;
     this.indexing = false;
@@ -139,6 +143,31 @@ export class Studio {
   async save() {
     const { clips, ...data } = this.data;
     await this.state.storage.put("data", data);
+  }
+  async setBroadcaster(user) {
+    if (this.data.user && this.data.user.id !== user.id) {
+      this.data.clips = [];
+      this.data.history = [];
+      this.data.seen = [];
+      this.data.window = [];
+      this.data.messages = 0;
+      this.data.lastFire = 0;
+      delete this.data.candidate;
+      this.data.settings.autoFire = false;
+      this.data.settings.chatBot = false;
+      this.data.overlayKey = crypto.randomUUID();
+      await this.saveClips();
+      for (const socket of this.sockets)
+        socket.close(1000, "Broadcaster changed");
+      this.sockets.clear();
+      this.socketRoles.clear();
+    }
+    this.data.user = {
+      id: user.id,
+      login: user.login,
+      name: user.display_name,
+    };
+    await this.save();
   }
   async saveClips() {
     const old = await this.state.storage.list({ prefix: "clips:" });
@@ -238,11 +267,18 @@ export class Studio {
       history: this.data.history,
       overlayKey: this.data.overlayKey,
       lastFire: this.data.lastFire,
+      seen: this.data.seen,
       messages: this.data.messages,
       embedding: this.data.clips.length
         ? "Workers AI · BGE semantic vectors"
         : "Ready to index",
       indexing: this.indexing,
+      connections: {
+        studio: [...this.socketRoles.values()].filter((r) => r === "studio")
+          .length,
+        overlay: [...this.socketRoles.values()].filter((r) => r === "overlay")
+          .length,
+      },
     };
   }
   async fetch(request) {
@@ -261,7 +297,7 @@ export class Studio {
           );
         if (request.headers.get("Upgrade") !== "websocket")
           return json({ ok: true, settings: this.data.settings });
-        return this.socket();
+        return this.socket("overlay");
       }
       const controlKey = request.headers.get("X-Control-Key");
       if (!controlKey)
@@ -293,6 +329,13 @@ export class Studio {
           room: request.headers.get("X-Studio-ID"),
         });
       }
+      if (path === "/api/status")
+        return json({
+          connections: this.public().connections,
+          indexing: this.indexing,
+          connected: !!this.data.user,
+          indexedClips: this.data.clips.length,
+        });
       if (path === "/auth/twitch") {
         if (!this.env.TWITCH_CLIENT_ID || !this.env.TWITCH_CLIENT_SECRET)
           return Response.redirect(`${origin}/?notice=twitch-setup`, 302);
@@ -337,12 +380,7 @@ export class Studio {
         const a = await r.json();
         this.data.auth = { ...a, expiresAt: Date.now() + a.expires_in * 1000 };
         const user = (await this.helix("users")).data[0];
-        this.data.user = {
-          id: user.id,
-          login: user.login,
-          name: user.display_name,
-        };
-        await this.save();
+        await this.setBroadcaster(user);
         return Response.redirect(`${origin}/?notice=connected`, 302);
       }
       if (request.method !== "POST")
@@ -497,7 +535,12 @@ export class Studio {
           });
           this.emit({
             type: "candidate",
-            candidate: { ...candidate, vector: undefined },
+            candidate: {
+              ...candidate,
+              vector: undefined,
+              runnerUp: ranked[1]?.score || 0,
+            },
+            matches: ranked.slice(0, 3).map(({ vector, ...clip }) => clip),
             verdict,
           });
           if (verdict.ok && this.data.settings.autoFire)
@@ -547,7 +590,11 @@ export class Studio {
       }
       if (path === "/api/preview") {
         const clip = this.data.clips.find((c) => c.id === body.id);
-        if (!this.data.user || !clip)
+        if (
+          !this.data.user ||
+          !clip ||
+          clip.broadcasterId !== this.data.user.id
+        )
           return json(
             { error: "Choose a clip from your own indexed library first." },
             400,
@@ -596,16 +643,25 @@ export class Studio {
       return json({ error: safeError(e) }, 500);
     }
   }
-  socket() {
+  socket(role = "studio") {
     const pair = new WebSocketPair();
     pair[1].accept();
     this.sockets.add(pair[1]);
+    this.socketRoles.set(pair[1], role);
     pair[1].send(JSON.stringify({ type: "ready" }));
-    pair[1].addEventListener("close", () => this.sockets.delete(pair[1]));
-    pair[1].addEventListener("error", () => this.sockets.delete(pair[1]));
+    const remove = () => {
+      this.sockets.delete(pair[1]);
+      this.socketRoles.delete(pair[1]);
+      this.emit({ type: "presence", connections: this.public().connections });
+    };
+    pair[1].addEventListener("close", remove);
+    pair[1].addEventListener("error", remove);
+    this.emit({ type: "presence", connections: this.public().connections });
     return new Response(null, { status: 101, webSocket: pair[0] });
   }
   async indexClips() {
+    const ownerId = this.data.user.id,
+      ownerName = this.data.user.name;
     const all = [];
     let cursor = "";
     for (let page = 0; page < 5; page++) {
@@ -617,9 +673,9 @@ export class Studio {
         label: "Fetching your channel’s clips from Twitch…",
       });
       const r = await this.helix(
-        `clips?broadcaster_id=${this.data.user.id}&first=100${cursor ? "&after=" + encodeURIComponent(cursor) : ""}`,
+        `clips?broadcaster_id=${ownerId}&first=100${cursor ? "&after=" + encodeURIComponent(cursor) : ""}`,
       );
-      all.push(...r.data.filter((c) => c.broadcaster_id === this.data.user.id));
+      all.push(...r.data.filter((c) => c.broadcaster_id === ownerId));
       cursor = r.pagination?.cursor;
       if (!cursor) break;
     }
@@ -660,10 +716,17 @@ export class Studio {
           duration: c.duration,
           thumbnail: c.thumbnail_url,
           url: c.url,
-          broadcaster: this.data.user.name,
+          broadcaster: ownerName,
+          broadcasterId: c.broadcaster_id,
           vector: result.data[j],
         }),
       );
+    }
+    if (this.data.user?.id !== ownerId) {
+      const error = new Error("Broadcaster changed during indexing");
+      error.publicMessage =
+        "Your connected account changed. Start indexing again for the current channel.";
+      throw error;
     }
     this.data.clips = indexed;
     await this.saveClips();
@@ -675,6 +738,18 @@ export class Studio {
     });
   }
   async fire(candidate) {
+    if (
+      !this.data.user ||
+      !this.data.clips.some(
+        (clip) =>
+          clip.id === candidate.id && clip.broadcasterId === this.data.user.id,
+      )
+    ) {
+      const error = new Error("Clip ownership check failed");
+      error.publicMessage =
+        "This memory is not in your connected channel’s indexed library. Index your own clips again.";
+      throw error;
+    }
     const { vector, runnerUp, ...clip } = candidate;
     this.data.lastFire = Date.now();
     this.data.seen.push(clip.id);

@@ -1,0 +1,27 @@
+{
+  "verifiedAt": "2026-10-30T23:01:47.993Z",
+  "obsVersion": "33.0.1",
+  "obsWebSocketVersion": "5.7.6",
+  "canvas": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30
+  },
+  "sourceKind": "browser_source",
+  "deployment": "https://callback-hackathon.sja-affu765.workers.dev",
+  "checks": {
+    "realOBS": true,
+    "authenticatedControl": true,
+    "privateOverlay": true,
+    "idleScreenshot": true,
+    "onAirScreenshot": true,
+    "exitScreenshot": true,
+    "idleFullyTransparent": true,
+    "callbackVisible": true,
+    "exitFullyTransparent": true,
+    "clipPlaybackMotion": true,
+    "audioRemovedInExport": true
+  },
+  "recordingFile": "obs-overlay-proof.mp4",
+  "renderer": "software browser rendering"
+}

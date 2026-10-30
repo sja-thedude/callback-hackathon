@@ -18,13 +18,13 @@ Stream communities are built on shared history: the same mistake, the familiar j
 
 Callback listens to a connected broadcaster's chat, searches that broadcaster's explicitly indexed clip library, and surfaces distinctive connections in an OBS-compatible overlay. The streamer can review or veto a candidate, set the confidence threshold and cooldown, or enable automatic airing. The original clip appears with its date and the reason it matters now. A session memory trail keeps the evidence available after the moment passes.
 
-Judges can try a setup-free replay with four scenarios against six real LIRIK clips. Replay text is scripted and clearly labeled; original clips play through their native host. This demo demonstrates the timing and production effect without needing someone to be streaming when a judge opens the link.
+Judges can try a setup-free replay with four scenarios against six Helix-indexed LIRIK clips. Replay text is scripted and clearly labeled; original clips play through their native host. This demo demonstrates the timing and production effect without needing someone to be streaming when a judge opens the link.
 
 ## How it is built
 
 The frontend uses browser-native JavaScript modules, CSS, and original SVG art. Cloudflare Workers handles OAuth and the Twitch API. Durable Objects isolate each studio, persist vector data, and synchronize private overlays. Live clip titles and game categories are embedded using BGE Small English vectors. EventSub delivers live chat, which is batched into a rolling semantic query. Confidence, separation from the runner-up, independent voices, cooldown, and duplicate checks all have to pass before a callback airs.
 
-The account-free replay uses a separate deterministic vector index with manually authored context. It never indexes someone else's archive into a connected streamer's live library.
+The account-free replay uses neural retrieval over API-verified public metadata, with cached search windows and an explicitly labeled local fallback. Its inference endpoint only accepts the fixed replay scenarios and is rate limited. The director’s desk exposes competing candidates, match separation, and the safety gates. It never indexes someone else's archive into a connected streamer's live library.
 
 ## How Codex was used
 
@@ -32,11 +32,11 @@ The project was built in one Codex thread: product structure, visual direction, 
 
 ## Current validation limits
 
-The public replay and overlay are tested. The deployed Twitch app credentials have been validated and an authenticated Helix metadata request succeeded. A broadcaster must still authorize their account; end-to-end live authentication, real chat ingestion, and chat posting still need that account-based verification. Raid/subscription/category-change triggers are not implemented. The production retrieval input is metadata, not a transcription of VODs.
+The public replay, neural retrieval, and actual OBS Studio 33.0.1 browser source are tested. The deployed Twitch app credentials have been validated and an authenticated Helix metadata request succeeded. The owner has confirmed successful broadcaster authorization. Their channel currently has no clips and is offline; own-channel retrieval, live chat ingestion, chat posting, and a live Twitch broadcast still require a real stream and saved clip. Raid/subscription/category-change triggers are not implemented. The production retrieval input is metadata, not a transcription of VODs.
 
 ## Available replay footage
 
-`replay-walkthrough.mp4` is a 73-second captioned walkthrough of the deployed account-free replay, recorded without audio or music. It includes product explanation and how Codex was used. Use it as replay footage; it does not replace a genuine live-channel demonstration or a public YouTube upload. `scripts/record-demo.mjs` recreates the walkthrough.
+`replay-walkthrough.mp4` is a 105-second captioned walkthrough of the deployed account-free neural replay followed by native OBS browser-source footage, recorded without audio or music. It includes ranked match evidence, original clip playback, product explanation, and how Codex was used. `obs-overlay-proof.mp4` separately contains the actual OBS capture. These do not replace a genuine own-channel live Twitch broadcast segment or a public YouTube upload. `scripts/record-demo.mjs` recreates the walkthrough.
 
 ## Three-minute video outline
 
@@ -51,7 +51,7 @@ Use spoken narration or captions. Do not add copyrighted music. Upload the finis
 
 ## Final owner actions
 
-- Authorize the configured Twitch app with your broadcaster account and verify the genuine live flow.
+- Start a short stream on the authorized account, save at least one clip, re-index the channel, and verify the genuine live flow.
 - Capture the live segment and upload the final video publicly to YouTube.
 - Paste this description, the live/repository/video URLs, and the Codex session ID into the submission form.
 - Target submission by **2 November 2026, 10:00pm Jeddah**. The stated hard cutoff is **3 November 2026, 1:00am GMT+3**.

@@ -197,3 +197,72 @@ test("overlay information cannot authorize studio control, including after disco
   assert.equal(room.data.controlKey, "test-controller-credential");
   assert.equal((await room.fetch(forged)).status, 403);
 });
+
+test("changing broadcaster clears the previous archive and revokes overlay access", async () => {
+  const { room } = await studio();
+  room.data.user = { id: "old", name: "Old" };
+  room.data.clips = [{ id: "old-clip", broadcasterId: "old", vector: [1, 0] }];
+  room.data.history = [{ id: "old-clip" }];
+  room.data.seen = ["old-clip"];
+  room.data.settings.autoFire = true;
+  room.data.settings.chatBot = true;
+  await room.saveClips();
+  const key = room.data.overlayKey;
+  await room.setBroadcaster({ id: "new", login: "new", display_name: "New" });
+  assert.equal(room.data.clips.length, 0);
+  assert.equal(room.data.history.length, 0);
+  assert.equal(room.data.seen.length, 0);
+  assert.notEqual(room.data.overlayKey, key);
+  assert.equal(room.data.settings.autoFire, false);
+  assert.equal(room.data.settings.chatBot, false);
+});
+test("re-authorizing the same broadcaster preserves the indexed archive", async () => {
+  const { room } = await studio();
+  room.data.user = { id: "owner", name: "Owner" };
+  room.data.clips = [{ id: "owned", broadcasterId: "owner" }];
+  await room.setBroadcaster({
+    id: "owner",
+    login: "owner",
+    display_name: "Owner",
+  });
+  assert.equal(room.data.clips.length, 1);
+});
+test("final airing gate rejects unindexed and foreign clips and accepts an owned indexed clip", async () => {
+  const { room } = await studio();
+  room.data.user = { id: "owner", name: "Owner" };
+  room.data.clips = [
+    { id: "foreign", broadcasterId: "other" },
+    { id: "owned", broadcasterId: "owner" },
+  ];
+  await assert.rejects(() => room.fire({ id: "foreign" }), /ownership/);
+  await assert.rejects(() => room.fire({ id: "unindexed" }), /ownership/);
+  assert.equal(room.data.history.length, 0);
+  await room.fire({ id: "owned", title: "Our memory", score: 0.9 });
+  assert.equal(room.data.history[0].id, "owned");
+});
+
+test("a previous broadcaster’s indexing job cannot install its archive after account switch", async () => {
+  const { room } = await studio({
+    AI: { run: async () => ({ data: [[1, 0]] }) },
+  });
+  room.data.user = { id: "old", name: "Old" };
+  let calls = 0;
+  room.helix = async () => {
+    if (++calls === 1) {
+      room.data.user = { id: "new", name: "New" };
+      return {
+        data: [
+          {
+            id: "old-clip",
+            broadcaster_id: "old",
+            title: "Old memory",
+            game_id: "42",
+          },
+        ],
+      };
+    }
+    return { data: [{ id: "42", name: "Game" }] };
+  };
+  await assert.rejects(() => room.indexClips(), /Broadcaster changed/);
+  assert.equal(room.data.clips.length, 0);
+});

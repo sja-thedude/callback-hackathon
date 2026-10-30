@@ -16,5 +16,12 @@
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Studio"] }],
   "ai": { "binding": "AI" },
+  "ratelimits": [
+    {
+      "name": "DEMO_LIMITER",
+      "namespace_id": "660765",
+      "simple": { "limit": 200, "period": 60 },
+    },
+  ],
   "observability": { "enabled": true },
 }
