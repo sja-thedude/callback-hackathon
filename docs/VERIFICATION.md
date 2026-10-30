@@ -12,3 +12,5 @@
 - Dedicated overlay HTML was checked before script execution to confirm it contains no dashboard content. Primary phone controls meet 44px tap targets, the animated phone card stays inside the preview, and the live workspace restores library/history in a mocked-session browser check.
 - Production requests verified that the overlay key cannot authorize studio settings and that the controller cookie is separate.
 - The embedded player may emit a browser keyboard-layout permission notice; the browser suite records external-player notices separately from application errors.
+
+- 31 October 2026: production Twitch secrets configured from ignored local files. Twitch app-token acquisition and validation succeeded, as did an authenticated Helix game-metadata request. Production configuration and the OAuth start route were checked. Broadcaster authorization and the full live-channel flow remain pending.

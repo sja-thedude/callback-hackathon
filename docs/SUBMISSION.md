@@ -32,7 +32,7 @@ The project was built in one Codex thread: product structure, visual direction, 
 
 ## Current validation limits
 
-The public replay and overlay are tested. Live Twitch requires registered developer-app credentials and an authorized broadcaster; end-to-end live authentication, real chat ingestion, and chat posting still need that account-based verification. Raid/subscription/category-change triggers are not implemented. The production retrieval input is metadata, not a transcription of VODs.
+The public replay and overlay are tested. The deployed Twitch app credentials have been validated and an authenticated Helix metadata request succeeded. A broadcaster must still authorize their account; end-to-end live authentication, real chat ingestion, and chat posting still need that account-based verification. Raid/subscription/category-change triggers are not implemented. The production retrieval input is metadata, not a transcription of VODs.
 
 ## Available replay footage
 
@@ -51,7 +51,7 @@ Use spoken narration or captions. Do not add copyrighted music. Upload the finis
 
 ## Final owner actions
 
-- Register/configure the Twitch app and verify the genuine live flow.
+- Authorize the configured Twitch app with your broadcaster account and verify the genuine live flow.
 - Capture the live segment and upload the final video publicly to YouTube.
 - Paste this description, the live/repository/video URLs, and the Codex session ID into the submission form.
 - Target submission by **2 November 2026, 10:00pm Jeddah**. The stated hard cutoff is **3 November 2026, 1:00am GMT+3**.
