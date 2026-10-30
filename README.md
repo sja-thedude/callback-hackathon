@@ -22,7 +22,7 @@ Open the demo, press **Let’s replay**, and watch the engine find a connection.
 - Authenticated EventSub chat, rolling context, three distinct voices, confidence and ambiguity gates, duplicate suppression, and server-enforced cooldowns.
 - Optional chat link posting after a live callback. Twitch 429 responses stop further requests until the reset window.
 
-**Live Twitch setup is required:** the deployment does not include a Twitch application's credentials. OAuth, indexing, EventSub, and chat posting are implemented and covered by component tests, but require a registered Twitch app and a real broadcaster connection for end-to-end verification. Channel-event triggers such as raids and subscriptions are not included.
+**Production Twitch app configured:** the app credentials are stored as Cloudflare secrets. Twitch accepted the credentials, an authenticated Helix metadata request succeeded, and the production authorization route uses the expected callback. A broadcaster must still connect and authorize their account before own-channel indexing, EventSub, and chat posting can be verified end to end. Channel-event triggers such as raids and subscriptions are not included.
 
 ## Run from a clean clone
 
@@ -44,7 +44,7 @@ npx playwright install chromium
 npm run test:browser
 ```
 
-The browser suite verifies replay, real-time overlay synchronization, transparent rendering, search, filters, saved settings, all screens in both themes at desktop and phone sizes, and the unconfigured connection state. `TEST_URL` selects a deployed target instead of localhost. Tests write screenshots to `docs/screenshots/`.
+The browser suite verifies replay, real-time overlay synchronization, transparent rendering, search, filters, saved settings, all screens in both themes at desktop and phone sizes, and the configured or unconfigured connection state. `TEST_URL` selects a deployed target instead of localhost. Tests write screenshots to `docs/screenshots/`.
 
 ## Connect a live channel
 

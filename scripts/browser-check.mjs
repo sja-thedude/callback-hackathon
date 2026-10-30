@@ -160,14 +160,18 @@ try {
     "PASS phone callback stays in-frame and primary controls have 44px tap targets",
   );
   await page.locator("#connect").click();
-  await page.waitForFunction(() =>
-    document
-      .querySelector("#connect-state")
-      .textContent.includes("credentials"),
-  );
-  assert.match(await page.locator("#connect-state").innerText(), /credentials/);
+  const connectionConfig = await (await page.request.get(url + "/api/config")).json();
+  if (connectionConfig.twitchConfigured) {
+    await page.locator('#connect-state a[href="/auth/twitch"]').waitFor();
+    console.log("PASS configured Twitch offers account authorization");
+  } else {
+    await page.waitForFunction(() =>
+      document.querySelector("#connect-state").textContent.includes("credentials"),
+    );
+    assert.match(await page.locator("#connect-state").innerText(), /credentials/);
+    console.log("PASS unconfigured Twitch has actionable setup state");
+  }
   await page.locator("#close-connect").click();
-  console.log("PASS unconfigured Twitch has actionable setup state");
   const live = await context.newPage();
   await live.setViewportSize({ width: 390, height: 844 });
   await live.route("**/api/session", async (route) => {
