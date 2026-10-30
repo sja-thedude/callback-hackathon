@@ -11,7 +11,9 @@
     "deploy": "wrangler deploy",
     "test": "node --test tests/*.test.js",
     "test:browser": "node scripts/browser-check.mjs",
-    "check": "node --check src/worker.js && node --check public/app.js && node --check public/engine.js"
+    "check": "node --check src/worker.js && node --check src/demo.js && node --check public/app.js && node --check public/engine.js",
+    "index:demo": "node scripts/index-demo.mjs",
+    "test:production": "node scripts/production-check.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",

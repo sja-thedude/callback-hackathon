@@ -1,4 +1,4 @@
-import { clips as demoClips, scenarios, names } from "./data.js";
+import { clips as demoClips, scenarios, names, demoLibrary } from "./data.js";
 import { rank, decision } from "./engine.js";
 const $ = (s) => document.querySelector(s),
   $$ = (s) => [...document.querySelectorAll(s)];
@@ -87,7 +87,7 @@ function artwork(c) {
 let airTimer;
 function callbackMarkup(c, { demo = true, auto = false } = {}) {
   const embed = `https://clips.twitch.tv/embed?clip=${encodeURIComponent(c.id)}&parent=${encodeURIComponent(location.hostname)}&autoplay=true&muted=true`;
-  return `<div class="callback-top"><span class="callback-badge"><span>↶</span> A MOMENT RETURNS</span><span class="callback-date">${date(c.date)}</span></div><div class="callback-image"><img src="${esc(artwork(c))}" alt="${c.thumbnail ? "Original clip thumbnail" : "Original memory illustration; not gameplay"}">${auto ? `<iframe src="${embed}" title="${esc(c.title)} — original clip" allow="autoplay; fullscreen" allowfullscreen></iframe>` : `<button class="callback-play" data-playclip="${esc(c.id)}" aria-label="Play original clip">${icon("play")}</button><span class="callback-art-label">${c.thumbnail ? "Original clip" : "Original illustration · play the original clip ↗"}</span>`}</div><div class="callback-detail"><h3>${esc(c.title)}</h3><p>${esc(c.reason || "Chat remembered. Your archive answered.")}</p><a href="https://clips.twitch.tv/${encodeURIComponent(c.id)}" target="_blank" rel="noreferrer">${demo ? "Demo archive · " : ""}${esc(c.broadcaster || "Your channel")} · Watch original ↗</a></div><div class="callback-timer"></div>`;
+  return `<div class="callback-top"><span class="callback-badge"><span>↶</span> A MOMENT RETURNS</span><span class="callback-date">${date(c.date)}</span></div><div class="callback-image"><img src="${esc(artwork(c))}" alt="${c.thumbnail ? "Original clip thumbnail" : "Original memory illustration; not gameplay"}">${auto ? `<iframe data-clip-src="${embed}" style="visibility:hidden" title="${esc(c.title)} — original clip" allow="autoplay; fullscreen" allowfullscreen></iframe>` : `<button class="callback-play" data-playclip="${esc(c.id)}" aria-label="Play original clip">${icon("play")}</button><span class="callback-art-label">${c.thumbnail ? "Original clip" : "Original illustration · play the original clip ↗"}</span>`}</div><div class="callback-detail"><h3>${esc(c.title)}</h3><p>${esc(c.reason || "Chat remembered. Your archive answered.")}</p><a href="https://clips.twitch.tv/${encodeURIComponent(c.id)}" target="_blank" rel="noreferrer">${demo ? "Demo archive · " : ""}${esc(c.broadcaster || "Your channel")} · Watch original ↗</a></div><div class="callback-timer"></div>`;
 }
 function showCard(element, c, options = {}) {
   element.className = "callback-card";
@@ -95,6 +95,16 @@ function showCard(element, c, options = {}) {
   element.style.setProperty("--airtime", `${options.duration || 20}s`);
   void element.offsetWidth;
   element.classList.add("airing");
+  const frame = element.querySelector("iframe[data-clip-src]");
+  if (frame)
+    setTimeout(
+      () => {
+        if (!frame.isConnected || !element.classList.contains("airing")) return;
+        frame.style.visibility = "visible";
+        frame.src = frame.dataset.clipSrc;
+      },
+      matchMedia("(prefers-reduced-motion:reduce)").matches ? 0 : 650,
+    );
   element
     .querySelector("[data-playclip]")
     ?.addEventListener("click", () => playOriginal(c));
@@ -120,7 +130,8 @@ async function overlayMode() {
     '<div id="callback-card" class="callback-card"></div><div class="overlay-connection" role="status"></div>';
   const p = new URLSearchParams(location.search),
     room = p.get("room"),
-    key = p.get("key");
+    key = p.get("key"),
+    sourceMode = p.get("mode") || "live";
   let retry = 0,
     socket;
   const status = (message) => {
@@ -150,6 +161,8 @@ async function overlayMode() {
         return;
       }
       if (event.type === "callback") {
+        if (sourceMode === "live" && event.demo) return;
+        if (sourceMode === "demo" && !event.demo) return;
         clearTimeout(airTimer);
         showCard($("#callback-card"), event.clip, {
           demo: !!event.demo,
@@ -188,6 +201,7 @@ function startStudio() {
   $$(
     ".brandmark,.orbit-mark,.engine-symbol>span,.strip-symbol,.trail-icon",
   ).forEach((el) => (el.innerHTML = mark));
+  $(".connect-illustration").innerHTML = mark + icon("chat");
   const savedTheme = stored("callback-theme", null);
   if (savedTheme) document.documentElement.dataset.theme = savedTheme;
   function themeIcon() {
@@ -276,7 +290,7 @@ function startStudio() {
   };
   function overlayLink() {
     if (!state.session) return;
-    const url = `${location.origin}/overlay?room=${state.session.room}&key=${state.session.overlayKey}`;
+    const url = `${location.origin}/overlay?room=${state.session.room}&key=${state.session.overlayKey}&mode=${state.mode}`;
     $("#overlay-url").value = url;
     $("#open-overlay").href = url;
   }
@@ -433,7 +447,7 @@ function startStudio() {
         cooldown: 8,
         lastFire: state.lastFire,
         seen: state.seen,
-        runnerUp: sorted[1]?.score || 0,
+        runnerUp: c.runnerUp ?? sorted[1]?.score ?? 0,
       });
       if (!verdict.ok) {
         toast(verdict.reason, true);
@@ -463,6 +477,7 @@ function startStudio() {
     );
     bars.classList.add("listening");
     if (!preview) {
+      state.lastFire = Date.now();
       state.history.unshift({
         ...c,
         at: Date.now(),
@@ -539,21 +554,94 @@ function startStudio() {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     toast("Session evidence exported.");
   };
-  function matchReplay() {
+  function renderDirector(candidates, source, latency = 0) {
+    const c = candidates[0];
+    if (!c) return;
+    const runnerUp = candidates[1]?.score ?? c.runnerUp ?? 0,
+      margin = c.score - runnerUp;
+    $("#retrieval-mode").textContent =
+      source === "neural"
+        ? "Neural · BGE"
+        : source === "live"
+          ? "Live · BGE"
+          : "Local backup";
+    $("#director-title").textContent = c.title;
+    $("#director-copy").textContent = c.reason;
+    $("#rival-matches").innerHTML = candidates
+      .slice(0, 3)
+      .map(
+        (item) =>
+          `<div class="rival-row"><span>${esc(item.title)}</span><span class="rival-track"><i style="transform:scaleX(${Math.max(0, Math.min(1, item.score))})"></i></span><strong>${Math.round(item.score * 100)}%</strong></div>`,
+      )
+      .join("");
+    const checks = [
+      [c.score >= state.settings.threshold, "Strong similarity"],
+      [margin >= 0.08, "Distinctive connection"],
+      [
+        new Set(state.messages.map((m) => m.user)).size >= 3 ||
+          state.mode === "live",
+        "Multiple voices",
+      ],
+      [
+        Date.now() - state.lastFire >=
+          (state.mode === "demo" ? 8 : state.settings.cooldown) * 1000,
+        "Cooldown clear",
+      ],
+      [!state.seen.includes(c.id), "Not already aired"],
+    ];
+    $("#safety-gates").innerHTML = checks
+      .map(
+        ([ok, label]) =>
+          `<span class="${ok ? "passed" : ""}">${ok ? "✓" : "○"} ${label}</span>`,
+      )
+      .join("");
+    $("#retrieval-evidence").textContent =
+      `${source === "neural" ? "BGE Small English v1.5" : source === "live" ? "Live neural retrieval" : "Local concept-assisted vectors"} · ${Math.round(margin * 100)}pt separation${latency ? " · " + latency + "ms search" : ""} · ${state.messages.slice(-5).length} recent messages · API-verified archive`;
+  }
+  async function matchReplay() {
     if (state.messages.length < 3 || state.scenarioFired) return;
+    const generation = state.generation || 0,
+      index = state.messages.length,
+      scenario = state.scenario;
     const query = state.messages
       .slice(-5)
       .map((m) => m.text)
       .join(" ");
-    const candidates = rank(query, demoClips),
-      c = candidates[0];
+    let candidates,
+      source = "neural",
+      latency = 0;
+    try {
+      const result = await Promise.race([
+        api("/api/demo/search", { scenario, index }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Search timeout")), 4500),
+        ),
+      ]);
+      candidates = result.matches;
+      latency = result.latencyMs;
+    } catch {
+      candidates = rank(query, demoClips);
+      source = "local";
+    }
+    if (
+      (state.generation || 0) !== generation ||
+      state.scenario !== scenario ||
+      state.scenarioFired ||
+      index < (state.appliedIndex || 0)
+    )
+      return;
+    state.appliedIndex = index;
+    const c = candidates[0];
     if (!c) return;
+    c.runnerUp = candidates[1]?.score || 0;
+    c.retrievalSource = source;
+    renderDirector(candidates, source, latency);
     const verdict = decision(c, {
       threshold: state.settings.threshold,
       cooldown: 8,
       lastFire: state.lastFire,
       seen: state.seen,
-      runnerUp: candidates[1]?.score || 0,
+      runnerUp: c.runnerUp,
     });
     if (c.score > 0.42) {
       renderCandidate(c, verdict);
@@ -564,12 +652,11 @@ function startStudio() {
           "A distinctive connection just cleared the threshold.",
         );
         if (!state.matchDue) {
-          state.matchDue = state.elapsed + 5;
+          state.matchDue = Math.min(44, state.elapsed + 5);
           $(".timeline-marker").style.left = (state.elapsed / 45) * 100 + "%";
         }
-      } else {
-        engine("Listening", "Something feels familiar…", verdict.reason);
-      }
+        if (state.elapsed >= 45) fire(c);
+      } else engine("Listening", "Something feels familiar…", verdict.reason);
     }
   }
   function updatePlay() {
@@ -595,6 +682,8 @@ function startStudio() {
           : "Ready when you are";
   }
   function resetReplay() {
+    state.generation = (state.generation || 0) + 1;
+    state.appliedIndex = 0;
     clearInterval(tickTimer);
     clearTimeout(airTimer);
     state.playing = false;
@@ -614,7 +703,7 @@ function startStudio() {
     $("#callback-card").className = "callback-card";
     $("#callback-card").innerHTML = "";
     $("#stage-idle").style.opacity = "1";
-    $("#timeline-progress").style.width = "0%";
+    $("#timeline-progress").style.transform = "scaleX(0)";
     $("#replay-time").textContent = "00:00";
     $(".stage-clock").textContent = "00:00";
     $("#chat-rate").textContent = "0";
@@ -654,7 +743,7 @@ function startStudio() {
       fire(state.candidate);
       state.matchDue = null;
     }
-    $("#timeline-progress").style.width = (state.elapsed / 45) * 100 + "%";
+    $("#timeline-progress").style.transform = `scaleX(${state.elapsed / 45})`;
     $("#replay-time").textContent = time(state.elapsed);
     $(".stage-clock").textContent = time(state.elapsed);
     $("#chat-rate").textContent = String(
@@ -795,6 +884,70 @@ function startStudio() {
       );
   }
   $("#test-overlay").onclick = () => previewOverlay();
+  $("#download-obs").onclick = () => {
+    if (!$("#overlay-url").value) {
+      toast("Your studio is connecting. Try again in a moment.", true);
+      return;
+    }
+    const collection = {
+      name: "Callback",
+      current_scene: "Callback live",
+      current_program_scene: "Callback live",
+      scene_order: [{ name: "Callback live" }],
+      sources: [
+        {
+          name: "Callback overlay",
+          id: "browser_source",
+          versioned_id: "browser_source",
+          settings: {
+            url: $("#overlay-url").value,
+            width: 1920,
+            height: 1080,
+            fps: 30,
+            shutdown: false,
+            restart_when_active: false,
+            reroute_audio: true,
+          },
+          enabled: true,
+          muted: true,
+        },
+        {
+          name: "Callback live",
+          id: "scene",
+          versioned_id: "scene",
+          settings: {
+            items: [
+              {
+                name: "Callback overlay",
+                visible: true,
+                locked: false,
+                pos: { x: 0, y: 0 },
+                scale: { x: 1, y: 1 },
+                rot: 0,
+                align: 5,
+                bounds_type: 0,
+                scale_filter: "disable",
+                id: 1,
+              },
+            ],
+          },
+        },
+      ],
+    };
+    const url = URL.createObjectURL(
+      new Blob([JSON.stringify(collection, null, 2)], {
+        type: "application/json",
+      }),
+    );
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "Callback-OBS-scene.json";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast(
+      "OBS scene downloaded. Import it through Scene Collection → Import. Keep the file private.",
+    );
+  };
   async function connectDialog() {
     $("#connect-dialog").showModal();
     const target = $("#connect-state");
@@ -862,6 +1015,8 @@ function startStudio() {
     resetReplay();
     state.mode = "live";
     state.clips = state.session.clips || [];
+    state.lastFire = state.session.lastFire || 0;
+    state.seen = state.session.seen || [];
     state.history = (state.session.history || []).map((moment) => ({
       ...moment,
       source: "live",
@@ -1054,10 +1209,18 @@ function startStudio() {
       } catch {
         return;
       }
+      if (event.type === "presence" && $("#obs-status")) {
+        const count = event.connections?.overlay || 0;
+        $("#obs-status").textContent = count
+          ? `OBS connected · ${count} browser source${count === 1 ? "" : "s"}`
+          : "OBS not connected · 1920 × 1080";
+      }
       if (event.type === "callback" && !event.demo && state.mode === "live")
         receiveCallback(event.clip, false, !!event.preview);
-      if (event.type === "candidate" && state.mode === "live")
+      if (event.type === "candidate" && state.mode === "live") {
         renderCandidate(event.candidate, event.verdict);
+        renderDirector(event.matches || [event.candidate], "live");
+      }
       if (event.type === "error") {
         toast(event.message, true);
         $("#index-clips").disabled = false;
