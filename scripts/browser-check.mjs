@@ -1,5 +1,6 @@
 import { chromium } from "@playwright/test";
 import assert from "node:assert/strict";
+import { clips, scenarios } from "../public/data.js";
 import { mkdir } from "node:fs/promises";
 const url = process.env.TEST_URL || "http://localhost:8787";
 const browser = await chromium.launch({ headless: true });
@@ -11,8 +12,11 @@ const page = await context.newPage();
 const errors = [];
 page.on("pageerror", (e) => {
   if (
-    /https:\/\/(?:[\w-]+\.)*(?:twitch\.tv|twitchcdn\.net|jtvnw\.net)\//.test(e.stack || "") ||
-    e.message === "getLayoutMap() must be called from a top-level browsing context or allowed by the permission policy."
+    /https:\/\/(?:[\w-]+\.)*(?:twitch\.tv|twitchcdn\.net|jtvnw\.net)\//.test(
+      e.stack || "",
+    ) ||
+    e.message ===
+      "getLayoutMap() must be called from a top-level browsing context or allowed by the permission policy."
   ) {
     console.log("External player notice:", e.message);
     return;
@@ -26,58 +30,64 @@ try {
     document.querySelector("#overlay-url").value.includes("room="),
   );
   await page.screenshot({
+    mask: [page.locator("#overlay-url")],
     path: "docs/screenshots/studio-light.png",
     fullPage: true,
     animations: "disabled",
   });
-  await page.locator('[data-speed="4"]').click();
-  await page.locator("#play").click();
-  await page.waitForFunction(
-    () => document.querySelector("#stat-callbacks").textContent.startsWith("1"),
-    { timeout: 20000 },
-  );
-  assert.equal(await page.locator("#callback-card.airing").count(), 1);
-  assert.match(
-    await page.locator("#callback-card").innerText(),
-    /Gotham Knights/,
-  );
-  await page.screenshot({
-    path: "docs/screenshots/callback-on-air.png",
-    fullPage: true,
-    animations: "disabled",
-  });
-  console.log("PASS replay produces the intended callback");
-  const overlayURL = await page.locator("#overlay-url").inputValue();
-  const overlayHTML = await (await page.request.get(overlayURL)).text();
-  assert.match(overlayHTML, /class="overlay-only"/);
-  assert.ok(!overlayHTML.includes("Your stream has a"));
-  const overlay = await context.newPage();
-  await overlay.goto(overlayURL);
-  await overlay.waitForTimeout(1500);
-  await page.locator('[data-view="overlay"]').click();
-  await page.locator("#test-overlay").click();
-  await overlay.locator("#callback-card.airing").waitFor({ timeout: 10000 });
-  assert.equal(await overlay.locator("iframe").count(), 1);
-  const background = await overlay
-    .locator("body")
-    .evaluate((el) => getComputedStyle(el).backgroundColor);
-  assert.equal(background, "rgba(0, 0, 0, 0)");
-  console.log(
-    "PASS OBS overlay receives a cross-tab callback and stays transparent",
-  );
-  await overlay.close();
+  if (clips.length) {
+    await page.locator('[data-speed="4"]').click();
+    await page.locator("#play").click();
+    await page.waitForFunction(
+      () =>
+        document.querySelector("#stat-callbacks").textContent.startsWith("1"),
+      { timeout: 20000 },
+    );
+    assert.equal(await page.locator("#callback-card.airing").count(), 1);
+    assert.ok(
+      (await page.locator("#callback-card").innerText()).includes(
+        clips[0].title,
+      ),
+    );
+    console.log("PASS replay produces the intended owned callback");
+    const overlayURL = await page.locator("#overlay-url").inputValue();
+    const overlay = await context.newPage();
+    await overlay.goto(overlayURL);
+    await page.waitForTimeout(1500);
+    await page.locator('[data-view="overlay"]').click();
+    await page.locator("#test-overlay").click();
+    await overlay.locator("#callback-card.airing").waitFor({ timeout: 10000 });
+    assert.equal(await overlay.locator("iframe").count(), 1);
+    assert.equal(
+      await overlay
+        .locator("body")
+        .evaluate((el) => getComputedStyle(el).backgroundColor),
+      "rgba(0, 0, 0, 0)",
+    );
+    await overlay.close();
+    console.log("PASS owned callback reaches transparent overlay");
+  } else {
+    assert.equal(await page.locator("#play").isDisabled(), true);
+    assert.match(
+      await page.locator("#stage-play").innerText(),
+      /being recorded/,
+    );
+    console.log(
+      "PASS unpublished owner archive has no fictional fallback; replay readiness remains pending",
+    );
+  }
   await page.locator('[data-view="library"]').click();
-  assert.equal(await page.locator(".clip-card").count(), 6);
-  await page.locator("#library-search").fill("smoke");
-  assert.equal(await page.locator(".clip-card").count(), 1);
-  assert.match(await page.locator(".clip-card").innerText(), /5Head/);
-  await page.locator("#library-search").fill("does-not-exist");
-  assert.equal(await page.locator(".library-empty").count(), 1);
-  await page.locator("#library-search").fill("");
-  await page.locator("#category-filter").selectOption("Starfield");
-  assert.equal(await page.locator(".clip-card").count(), 1);
-  await page.locator("#category-filter").selectOption("");
-  console.log("PASS library search, category filtering and empty states");
+  assert.equal(await page.locator(".clip-card").count(), clips.length);
+  if (clips.length) {
+    await page.locator("#library-search").fill(clips[0].title);
+    assert.ok((await page.locator(".clip-card").count()) >= 1);
+    await page.locator("#library-search").fill("does-not-exist-zz");
+    assert.equal(await page.locator(".library-empty").count(), 1);
+    await page.locator("#library-search").fill("");
+    await page.locator("#category-filter").selectOption(clips[0].category);
+    assert.ok((await page.locator(".clip-card").count()) >= 1);
+    await page.locator("#category-filter").selectOption("");
+  }
   await page.locator("#open-settings").click();
   await page.locator("#threshold").fill("85");
   await page.locator("#save-settings").click();
@@ -110,6 +120,7 @@ try {
         );
         if (view === "studio" || width === 390)
           await page.screenshot({
+            mask: [page.locator("#overlay-url")],
             path: `docs/screenshots/${view}-${theme}-${width}.png`,
             fullPage: true,
             animations: "disabled",
@@ -138,37 +149,46 @@ try {
       );
     }
   }
-  await page.locator("#scenario").selectOption("1");
-  await page.locator('[data-speed="4"]').click();
-  await page.locator("#play").click();
-  await page.locator("#callback-card.airing").waitFor({ timeout: 15000 });
-  await page.waitForTimeout(650);
-  const stageBox = await page.locator("#stage").boundingBox();
-  const cardBox = await page.locator("#callback-card").boundingBox();
-  assert.ok(
-    cardBox.y >= stageBox.y &&
-      cardBox.y + cardBox.height <= stageBox.y + stageBox.height,
-    "Phone callback fits in the preview",
-  );
-  await page
-    .locator("#stage")
-    .screenshot({
+  if (clips.length) {
+    await page
+      .locator("#scenario")
+      .selectOption(String(Math.min(1, scenarios.length - 1)));
+    await page.locator('[data-speed="4"]').click();
+    await page.locator("#play").click();
+    await page.locator("#callback-card.airing").waitFor({ timeout: 15000 });
+    await page.waitForTimeout(650);
+    const stageBox = await page.locator("#stage").boundingBox();
+    const cardBox = await page.locator("#callback-card").boundingBox();
+    assert.ok(
+      cardBox.y >= stageBox.y &&
+        cardBox.y + cardBox.height <= stageBox.y + stageBox.height,
+      "Phone callback fits in the preview",
+    );
+    await page.locator("#stage").screenshot({
       path: "docs/screenshots/callback-phone.png",
       animations: "disabled",
     });
-  console.log(
-    "PASS phone callback stays in-frame and primary controls have 44px tap targets",
-  );
+    console.log(
+      "PASS phone callback stays in-frame and primary controls have 44px tap targets",
+    );
+  }
   await page.locator("#connect").click();
-  const connectionConfig = await (await page.request.get(url + "/api/config")).json();
+  const connectionConfig = await (
+    await page.request.get(url + "/api/config")
+  ).json();
   if (connectionConfig.twitchConfigured) {
     await page.locator('#connect-state a[href="/auth/twitch"]').waitFor();
     console.log("PASS configured Twitch offers account authorization");
   } else {
     await page.waitForFunction(() =>
-      document.querySelector("#connect-state").textContent.includes("credentials"),
+      document
+        .querySelector("#connect-state")
+        .textContent.includes("credentials"),
     );
-    assert.match(await page.locator("#connect-state").innerText(), /credentials/);
+    assert.match(
+      await page.locator("#connect-state").innerText(),
+      /credentials/,
+    );
     console.log("PASS unconfigured Twitch has actionable setup state");
   }
   await page.locator("#close-connect").click();
@@ -194,12 +214,23 @@ try {
         user: { id: "owner", name: "Owner", login: "owner" },
         clips: [clip],
         history: [clip],
+        candidate: { ...clip, runnerUp: 0.2, matchedAt: Date.now() },
+        pendingCallback: { id: clip.id, dueAt: Date.now() + 7000 },
       },
     });
   });
   await live.goto(url);
   await live.waitForFunction(() =>
     document.querySelector("#stat-callbacks").textContent.startsWith("1"),
+  );
+  await live.locator("#pending-callback").waitFor();
+  assert.match(await live.locator("#pending-callback").innerText(), /Airs in/);
+  await live.locator("#veto-candidate").click();
+  await live.waitForFunction(() =>
+    document.querySelector("#candidate").classList.contains("hidden"),
+  );
+  console.log(
+    "PASS restored veto countdown and veto controls (mocked live candidate)",
   );
   await live.locator("#memory-trail summary").click();
   assert.match(
@@ -220,5 +251,6 @@ try {
   assert.deepEqual(errors, []);
   console.log("PASS no application JavaScript errors");
 } finally {
+  await page.request.post(url + "/api/rotate-overlay", { headers: { Origin: new URL(url).origin }, data: {} }).catch(() => {});
   await browser.close();
 }

@@ -22,6 +22,7 @@
     "clipPlaybackMotion": true,
     "audioRemovedInExport": true
   },
-  "recordingFile": "obs-overlay-proof.mp4",
-  "renderer": "software browser rendering"
+  "renderer": "software browser rendering",
+  "status": "historical development check; superseded for owned-channel submission",
+  "ownedOnAirPlayback": "pending published owner clips"
 }

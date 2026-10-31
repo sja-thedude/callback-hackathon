@@ -1,5 +1,10 @@
 import { chromium } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
+import { clips } from "../public/data.js";
+if (!clips.length)
+  throw new Error(
+    "Publish and index the owner's clips before recording the demo.",
+  );
 const out = "/tmp/callback-recording";
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch({ headless: true });
@@ -59,7 +64,7 @@ await pause(5500);
 await caption(
   "01 / THE REPLAY",
   "No account. No setup. Watch a conversation find its history.",
-  "This walkthrough uses clearly labeled scripted chat and real public LIRIK clip references.",
+  "This walkthrough uses clearly labeled scripted chat and the owner's original indexed clips.",
 );
 await page.locator("#stage-play").click();
 await pause(6000);
@@ -129,7 +134,7 @@ await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
 await caption(
   "08 / BUILT IN CODEX",
   "Built in one Codex thread, from the first branch to Cloudflare.",
-  "Product, neural retrieval, backend, original visuals, 19 tests, real OBS verification, and deployment.",
+  "Product, neural retrieval, backend, original visuals, 29 tests, real OBS verification, and deployment.",
 );
 await pause(6500);
 await caption(

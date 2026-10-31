@@ -13,7 +13,9 @@
     "test:browser": "node scripts/browser-check.mjs",
     "check": "node --check src/worker.js && node --check src/demo.js && node --check public/app.js && node --check public/engine.js",
     "index:demo": "node scripts/index-demo.mjs",
-    "test:production": "node scripts/production-check.mjs"
+    "test:production": "node scripts/production-check.mjs",
+    "test:cold": "node scripts/cold-check.mjs",
+    "check:secrets": "node scripts/check-secrets.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
