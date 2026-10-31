@@ -1,0 +1,40 @@
+# Hackathon requirements and evidence
+
+Checked against the [official rules](https://twitchcon-codex.devpost.com/rules) and [submission requirements](https://twitchcon-codex.devpost.com/) on 31 October 2026. This is a preparation checklist, not an eligibility determination or confirmation that the entry has been submitted.
+
+## Required deliverables
+
+| Requirement | Callback evidence | Remaining action |
+| --- | --- | --- |
+| Interactive experience for streamers and their community, connected to Twitch and built with Codex | Twitch OAuth, Helix clip indexing, EventSub integration, semantic retrieval, private OBS overlay; account-free replay with real Twitch clips | Complete an own-channel live test before claiming that path is verified |
+| Consistent operation matching the video and description | 23 tests, production browser checks, deployed neural retrieval checks, actual OBS transparency and moving clip playback | Keep live-path limits explicit in submission copy |
+| Repository containing source, assets, and run instructions | Public repository, MIT license, clean-clone setup, configuration names, screenshots and verification scripts | Keep available for judging |
+| Text describing features, functionality, and use of Codex | `SUBMISSION.md` contains paste-ready project copy | Enter the copy in Devpost |
+| Session ID for the main build thread | `01a18e51-660f-7513-a84d-3ce53f8c7732` | Enter in the dedicated submission field |
+| Video under three minutes showing Twitch functionality and how the project was built with Codex | 105-second captioned replay and actual OBS footage exist locally and in the repository | Add actual footage of the build thread; review Twitch functionality evidence and footage permissions |
+| Publicly visible YouTube video linked in submission | No public video URL recorded | Upload the final edit publicly, check signed-out playback, and enter the URL |
+| English submission materials | App, instructions, project copy and captions are English | Keep additions in English or include translation |
+| Newly created work during the submission period | Project built in this thread; source history available | Entrant confirms creation dates and ownership |
+| Authorized third-party integrations and submission material | Official API integration; public demo clips credited and embedded from Twitch | Credit is not redistribution permission: obtain permission for video material or use owned clips |
+| Free access through the end of judging | Public Cloudflare demo and repository, no account needed for replay | Keep both available through 15 November 2026, 5pm Pacific / 16 November, 4am Jeddah |
+
+The video wording requires footage of the project functioning on Twitch. It does not expressly require a public live broadcast. The replay uses real Twitch clips but scripted chat; show that distinction clearly. A genuine connected-channel callback provides stronger end-to-end evidence. The rules also request footage showing how the project was built with Codex: a title card or narration about its use should accompany an actual screen capture, rather than substitute for one.
+
+## Evidence for the four equally weighted criteria
+
+| Criterion | What to demonstrate |
+| --- | --- |
+| Innovation / Idea | Chat recalls an old moment and the matching original clip appears during the conversation. Explain retrieval over a channel's own history as a live production element. Avoid unsupported claims that no other product exists. |
+| Potential impact | Show the shared joke landing for a community and how the streamer controls airtime. Describe the intended benefit; do not claim measured engagement gains. |
+| Technological implementation | Show neural ranking and competing candidates, ownership boundaries, cooldown and ambiguity gates, private overlay delivery, and one concrete implementation/test in the build thread. |
+| Design | Lead with the animated overlay, then show clear studio controls, setup-free replay, phone layout, light/dark themes, and OBS transparency. |
+
+## Final submission sequence
+
+1. Review the project copy against the verified behavior. Clear footage permissions and add actual development footage, keeping the edit below three minutes.
+2. Upload to YouTube with public visibility. Test the link while signed out.
+3. Open the [existing Devpost project](https://devpost.com/submit-to/31742-codex-x-twitchcon-hackathon/manage/submissions/1273659-callback/edit). Enter the repository, live demo, video, description, screenshots, and session ID.
+4. The entrant confirms personal eligibility, ownership, third-party permissions, and the submission terms. Save and complete submission, then verify its submitted status.
+5. Target **2 November 2026 at 10pm Jeddah**. Official cutoff: **3 November 2026 at 1am Jeddah**, equivalent to 2 November at 2pm Pacific Standard Time. Keep access working through the judging period.
+
+No completed YouTube upload, accepted terms, or final Devpost submission is claimed by this checklist.

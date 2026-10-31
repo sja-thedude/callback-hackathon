@@ -6,6 +6,10 @@ Repository: https://github.com/sja-thedude/callback-hackathon
 
 Codex session ID: 01a18e51-660f-7513-a84d-3ce53f8c7732
 
+Submission editor: https://devpost.com/submit-to/31742-codex-x-twitchcon-hackathon/manage/submissions/1273659-callback/edit
+
+See [the official requirements and evidence checklist](HACKATHON_REQUIREMENTS.md) before submitting. The text below describes implemented behavior; the validation limits distinguish it from observed live-channel behavior.
+
 ## One-line pitch
 
 Your stream has a memory. Callback brings the perfect old clip back at the moment your community remembers it.
@@ -30,13 +34,21 @@ The account-free replay uses neural retrieval over API-verified public metadata,
 
 The project was built in one Codex thread: product structure, visual direction, original SVG assets, frontend interactions, retrieval engine, Cloudflare backend, OAuth and EventSub integration, safeguards, tests, documentation, and deployment. The same thread exercised automated Chromium checks at desktop and phone sizes, tested both color themes, verified cross-tab overlay delivery and transparency, inspected screenshots, and checked the real clip embed.
 
+## Why it matters
+
+The distinctive idea is bringing a stream's past into its present as a production element. Viewers can recognize the shared joke together, while the streamer keeps producing the show. The archive becomes useful during the conversation, rather than only when someone searches it afterward.
+
+The implementation makes restraint visible: competing matches, match separation, independent chatters, cooldown, and ownership checks determine whether a moment deserves airtime. The design puts the payoff on screen with an animated, transparent overlay, while the account-free replay lets judges experience the complete interaction immediately. Impact on audience retention or engagement has not been measured.
+
 ## Current validation limits
 
 The public replay, neural retrieval, and actual OBS Studio 33.0.1 browser source are tested. The deployed Twitch app credentials have been validated and an authenticated Helix metadata request succeeded. The owner has confirmed successful broadcaster authorization. Their channel currently has no clips and is offline; own-channel retrieval, live chat ingestion, chat posting, and a live Twitch broadcast still require a real stream and saved clip. Raid/subscription/category-change triggers are not implemented. The production retrieval input is metadata, not a transcription of VODs.
 
 ## Available replay footage
 
-`replay-walkthrough.mp4` is a 105-second captioned walkthrough of the deployed account-free neural replay followed by native OBS browser-source footage, recorded without audio or music. It includes ranked match evidence, original clip playback, product explanation, and how Codex was used. `obs-overlay-proof.mp4` separately contains the actual OBS capture. These do not replace a genuine own-channel live Twitch broadcast segment or a public YouTube upload. `scripts/record-demo.mjs` recreates the walkthrough.
+`replay-walkthrough.mp4` is a 105-second captioned walkthrough of the deployed account-free neural replay followed by native OBS browser-source footage, recorded without audio or music. It includes ranked match evidence, original clip playback, product explanation, and captions describing how Codex was used. `obs-overlay-proof.mp4` separately contains the actual OBS capture. Neither file has been uploaded publicly to YouTube. Add actual footage of this Codex build thread: captions alone do not show the development process. `scripts/record-demo.mjs` recreates the walkthrough.
+
+The rules require footage of the project functioning on Twitch; they do not explicitly require a public live broadcast. The current recording shows Twitch-hosted clips and actual OBS playback with scripted replay chat. A connected-channel live callback would provide stronger evidence of the complete live path, which remains unverified. Before publishing, obtain permission for third-party footage or replace it with footage you own; embedding a public clip and crediting its creator do not establish permission to redistribute it in a submission video.
 
 ## Three-minute video outline
 
@@ -44,14 +56,15 @@ The public replay, neural retrieval, and actual OBS Studio 33.0.1 browser source
 - **0:20–1:00:** Start the account-free replay. Show chat building, a candidate clearing the threshold, the original clip returning, and its reason/date.
 - **1:00–1:30:** Open the transparent overlay next to the studio. Preview a callback and show synchronized delivery. Explain adding it to OBS as a browser source.
 - **1:30–2:00:** Show confidence, cooldown, manual approval/veto, and the session memory trail. Explain why the engine holds weak or ambiguous matches.
-- **2:00–2:30:** After configuring Twitch credentials, show real account connection, own-channel indexing, and a genuine live callback. Do not present the scripted replay as live chat.
-- **2:30–3:00:** Briefly explain the Cloudflare and semantic retrieval architecture, then describe using Codex in this single thread.
+- **2:00–2:25:** Show real account connection and Twitch integration. Prefer a verified own-channel callback after saving and indexing a clip. Label replay footage accurately and omit any live-path claim that has not been verified.
+- **2:25–2:50:** Show this actual Codex thread working on a concrete implementation or test, with private values and unrelated conversations excluded. Briefly explain the Cloudflare and semantic retrieval architecture.
 
-Use spoken narration or captions. Do not add copyrighted music. Upload the finished video publicly to YouTube and add its URL to the submission.
+Keep the final edit below three minutes. Use spoken narration or captions alongside the required development footage. Use original or permission-cleared footage and no copyrighted music. Upload the finished video publicly to YouTube and add its URL to the submission.
 
 ## Final owner actions
 
-- Start a short stream on the authorized account, save at least one clip, re-index the channel, and verify the genuine live flow.
-- Capture the live segment and upload the final video publicly to YouTube.
+- Verify the genuine live flow on the authorized account by saving a clip and re-indexing. This strengthens the evidence; a public broadcast is not separately mandated by the rules.
+- Add actual Codex development footage and resolve third-party footage permissions, then upload the final video publicly to YouTube.
 - Paste this description, the live/repository/video URLs, and the Codex session ID into the submission form.
+- Keep the free public demo and repository available through the end of judging on 15 November 2026. Confirm personal eligibility and the required permissions before accepting the submission terms.
 - Target submission by **2 November 2026, 10:00pm Jeddah**. The stated hard cutoff is **3 November 2026, 1:00am GMT+3**.

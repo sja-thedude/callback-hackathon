@@ -24,7 +24,7 @@ Open the demo, press **Let’s replay**, and watch the engine find a connection.
 - Authenticated EventSub chat, rolling context, three distinct voices, confidence and ambiguity gates, duplicate suppression, and server-enforced cooldowns.
 - Optional chat link posting after a live callback. Twitch 429 responses stop further requests until the reset window.
 
-**Production Twitch app configured:** the app credentials are stored as Cloudflare secrets. Twitch accepted the credentials, an authenticated Helix metadata request succeeded, and the production authorization route uses the expected callback. A broadcaster must still connect and authorize their account before own-channel indexing, EventSub, and chat posting can be verified end to end. Channel-event triggers such as raids and subscriptions are not included.
+**Production Twitch app configured:** the app credentials are stored as Cloudflare secrets. Twitch accepted the credentials, an authenticated Helix metadata request succeeded, and the production authorization route uses the expected callback. The owner confirmed successful broadcaster authorization. Own-channel indexing, EventSub, and chat posting still need end-to-end verification with a saved channel clip and live chat. Channel-event triggers such as raids and subscriptions are not included.
 
 ## Run from a clean clone
 
@@ -115,7 +115,7 @@ Autoplay, cookies, geographic restrictions, deleted clips, or host policy can af
 
 ## Submission materials
 
-[Submission fields, project description, and video outline](docs/SUBMISSION.md) are prepared, along with a [verification record](docs/VERIFICATION.md). A [105-second captioned replay and actual OBS walkthrough](docs/replay-walkthrough.mp4) is included with no audio or music. A [standalone native OBS proof recording](docs/obs-overlay-proof.mp4) is also included. This footage demonstrates the public replay and real OBS browser-source playback; the final submission video still needs a genuine live-channel segment and public YouTube upload.
+[Submission fields, project description, and video outline](docs/SUBMISSION.md) are prepared, along with a [verification record](docs/VERIFICATION.md) and [official requirements checklist](docs/HACKATHON_REQUIREMENTS.md). A [105-second captioned replay and actual OBS walkthrough](docs/replay-walkthrough.mp4) is included with no audio or music. A [standalone native OBS proof recording](docs/obs-overlay-proof.mp4) is also included. This footage demonstrates the public replay and real OBS browser-source playback. The final submission video needs actual development footage, permission-cleared material, and a public YouTube upload; an own-channel live callback would strengthen evidence of the live path.
 
 ## Project workflow
 

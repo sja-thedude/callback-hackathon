@@ -13,7 +13,7 @@
 - Production requests verified that the overlay key cannot authorize studio settings and that the controller cookie is separate.
 - The embedded player may emit a browser keyboard-layout permission notice; the browser suite records external-player notices separately from application errors.
 
-- 31 October 2026: production Twitch secrets configured from ignored local files. Twitch app-token acquisition and validation succeeded, as did an authenticated Helix game-metadata request. Production configuration and the OAuth start route were checked. Broadcaster authorization and the full live-channel flow remain pending.
+- 31 October 2026: production Twitch secrets configured from ignored local files. Twitch app-token acquisition and validation succeeded, as did an authenticated Helix game-metadata request. Production configuration and the OAuth start route were checked. The owner subsequently confirmed broadcaster authorization; the full live-channel flow remains pending.
 
 - All six LIRIK demo clips were indexed through Helix with broadcaster ownership checks, original thumbnails, timestamps, actual durations, and clip-creator attribution.
 - Deployed BGE neural retrieval returned the intended match for all four natural chat scenarios. Final-window similarities ranged from 0.777 to 0.887, with runner-up separation from 0.246 to 0.314. These are cosine similarities, not calibrated confidence probabilities.
