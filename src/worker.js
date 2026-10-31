@@ -1,5 +1,6 @@
 import { rank, decision, tokens } from "../public/engine.js";
 import { retrieveDemo } from "./demo.js";
+import { embeddingText, normalizeClip } from "./clip-index.js";
 const json = (data, status = 200) =>
   Response.json(data, {
     status,
@@ -146,6 +147,7 @@ export class Studio {
   }
   async setBroadcaster(user) {
     if (this.data.user && this.data.user.id !== user.id) {
+      await this.cancelPending();
       this.data.clips = [];
       this.data.history = [];
       this.data.seen = [];
@@ -177,6 +179,54 @@ export class Studio {
         `clips:${String(i).padStart(4, "0")}`,
         this.data.clips.slice(i, i + 5),
       );
+  }
+  async cancelPending() {
+    const pending = this.data.pendingCallback;
+    delete this.data.pendingCallback;
+    await this.state.storage.deleteAlarm();
+    if (pending) this.emit({ type: "callback-pending", pending: null });
+  }
+  async queueCallback(candidate) {
+    if (this.data.pendingCallback?.id === candidate.id) return;
+    await this.cancelPending();
+    const pending = { id: candidate.id, dueAt: Date.now() + 7000 };
+    this.data.pendingCallback = pending;
+    await this.save();
+    await this.state.storage.setAlarm(pending.dueAt);
+    this.emit({ type: "callback-pending", pending });
+  }
+  async alarm() {
+    const pending = this.data.pendingCallback;
+    if (!pending) return;
+    if (pending.dueAt > Date.now()) {
+      await this.state.storage.setAlarm(pending.dueAt);
+      return;
+    }
+    await this.cancelPending();
+    const candidate = this.data.candidate;
+    const voices = new Set(
+      this.data.window
+        .filter((m) => Date.now() - m.at < 30000)
+        .map((m) => m.user),
+    );
+    if (
+      !this.data.settings.autoFire ||
+      !candidate ||
+      candidate.id !== pending.id ||
+      Date.now() - candidate.matchedAt > 45000 ||
+      voices.size < 3
+    ) {
+      await this.save();
+      return;
+    }
+    const verdict = decision(candidate, {
+      ...this.data.settings,
+      lastFire: this.data.lastFire,
+      seen: this.data.seen,
+      runnerUp: candidate.runnerUp,
+    });
+    if (verdict.ok) await this.fire(candidate);
+    else await this.save();
   }
   emit(event) {
     for (const socket of this.sockets) {
@@ -273,6 +323,11 @@ export class Studio {
         ? "Workers AI · BGE semantic vectors"
         : "Ready to index",
       indexing: this.indexing,
+      pendingCallback: this.data.pendingCallback || null,
+      candidate: this.data.candidate
+        ? { ...this.data.candidate, vector: undefined }
+        : null,
+      botStatus: this.data.botStatus || null,
       connections: {
         studio: [...this.socketRoles.values()].filter((r) => r === "studio")
           .length,
@@ -404,11 +459,13 @@ export class Studio {
             this.data.settings[k] = Math.min(max, Math.max(min, body[k]));
         for (const k of ["autoFire", "chatBot"])
           if (typeof body[k] === "boolean") this.data.settings[k] = body[k];
+        if (!this.data.settings.autoFire) await this.cancelPending();
         await this.save();
         this.emit({ type: "settings", settings: this.data.settings });
         return json(this.data.settings);
       }
       if (path === "/api/disconnect") {
+        await this.cancelPending();
         if (this.data.auth) {
           await fetch("https://id.twitch.tv/oauth2/revoke", {
             method: "POST",
@@ -451,6 +508,8 @@ export class Studio {
           );
         if (this.indexing)
           return json({ error: "Your library is already being indexed." }, 409);
+        await this.cancelPending();
+        delete this.data.candidate;
         this.indexing = true;
         this.state.waitUntil(
           this.indexClips()
@@ -482,6 +541,14 @@ export class Studio {
         });
         return json({ connected: !!result.data?.length });
       }
+      if (path === "/api/pause") {
+        await this.cancelPending();
+        delete this.data.candidate;
+        this.data.window = [];
+        await this.save();
+        this.emit({ type: "chat-paused" });
+        return json({ ok: true });
+      }
       if (path === "/api/ingest") {
         if (!this.data.user || !this.data.clips.length)
           return json({ error: "Connect and index your channel first." }, 400);
@@ -489,6 +556,14 @@ export class Studio {
           return json({ error: "Send a bounded chat window." }, 400);
         const batch = body.messages
           .filter((m) => typeof m.text === "string" && m.text.length <= 500)
+          .filter(
+            (m) =>
+              !(
+                String(m.user).toLowerCase() ===
+                  this.data.user.name.toLowerCase() &&
+                m.text.startsWith("↶ Callback:")
+              ),
+          )
           .map((m) => ({
             text: m.text,
             user: String(m.user || "viewer").slice(0, 50),
@@ -544,7 +619,8 @@ export class Studio {
             verdict,
           });
           if (verdict.ok && this.data.settings.autoFire)
-            await this.fire(candidate);
+            await this.queueCallback(candidate);
+          else await this.cancelPending();
           await this.save();
           return json({
             candidate: { ...candidate, vector: undefined },
@@ -581,6 +657,7 @@ export class Studio {
       }
       if (path === "/api/veto") {
         if (this.data.candidate?.id === body.id) {
+          await this.cancelPending();
           this.data.seen.push(body.id);
           delete this.data.candidate;
           await this.save();
@@ -619,9 +696,17 @@ export class Studio {
         return json({ ok: true });
       }
       if (path === "/api/demo-broadcast") {
-        const { clips } = await import("../public/data.js");
+        const { clips, demoLibrary } = await import("../public/data.js");
         const clip = clips.find((c) => c.id === body.id);
-        if (!clip) return json({ error: "Unknown demo memory." }, 400);
+        if (
+          !clip ||
+          !demoLibrary.ownedContent ||
+          clip.broadcasterId !== demoLibrary.broadcaster.id
+        )
+          return json(
+            { error: "Choose a verified owned-channel demo memory." },
+            400,
+          );
         this.emit({
           type: "callback",
           clip: {
@@ -701,23 +786,15 @@ export class Studio {
         label: `Building semantic memories · ${i} of ${all.length}`,
       });
       const batch = all.slice(i, i + 24);
+      const normalized = batch.map((c) =>
+        normalizeClip(c, games, { id: ownerId, name: ownerName }),
+      );
       const result = await this.env.AI.run("@cf/baai/bge-small-en-v1.5", {
-        text: batch.map(
-          (c) => `${c.title} ${games[c.game_id] || "Just Chatting"}`,
-        ),
+        text: normalized.map(embeddingText),
       });
       batch.forEach((c, j) =>
         indexed.push({
-          id: c.id,
-          title: c.title,
-          category: games[c.game_id] || "Just Chatting",
-          date: c.created_at,
-          views: c.view_count,
-          duration: c.duration,
-          thumbnail: c.thumbnail_url,
-          url: c.url,
-          broadcaster: ownerName,
-          broadcasterId: c.broadcaster_id,
+          ...normalized[j],
           vector: result.data[j],
         }),
       );
@@ -750,6 +827,7 @@ export class Studio {
         "This memory is not in your connected channel’s indexed library. Index your own clips again.";
       throw error;
     }
+    await this.cancelPending();
     const { vector, runnerUp, ...clip } = candidate;
     this.data.lastFire = Date.now();
     this.data.seen.push(clip.id);
@@ -764,7 +842,7 @@ export class Studio {
     });
     if (this.data.settings.chatBot) {
       try {
-        await this.helix("chat/messages", {
+        const delivery = await this.helix("chat/messages", {
           method: "POST",
           body: JSON.stringify({
             broadcaster_id: this.data.user.id,
@@ -772,8 +850,18 @@ export class Studio {
             message: `↶ Callback: ${clip.title} (${clip.date.slice(0, 10)}) — ${clip.url}`,
           }),
         });
+        if (!delivery.data?.[0]?.is_sent)
+          throw new Error("Twitch did not accept the chat message.");
+        this.data.botStatus = { sent: true, at: Date.now(), title: clip.title };
+        await this.save();
         this.emit({ type: "bot-sent", title: clip.title });
       } catch (e) {
+        this.data.botStatus = {
+          sent: false,
+          at: Date.now(),
+          title: clip.title,
+        };
+        await this.save();
         this.emit({
           type: "error",
           message:

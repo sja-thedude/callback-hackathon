@@ -27,6 +27,12 @@ function memoryState(seed = {}) {
           [...values].filter(([k]) => k.startsWith(prefix)).sort(),
         );
       },
+      async setAlarm(at) {
+        values.set("alarm", at);
+      },
+      async deleteAlarm() {
+        values.delete("alarm");
+      },
     },
   };
 }
@@ -265,4 +271,105 @@ test("a previous broadcaster’s indexing job cannot install its archive after a
   };
   await assert.rejects(() => room.indexClips(), /Broadcaster changed/);
   assert.equal(room.data.clips.length, 0);
+});
+
+async function queuedStudio() {
+  const result = await studio();
+  const { room } = result;
+  room.data.user = { id: "owner", name: "Owner" };
+  room.data.clips = [
+    { id: "owned", broadcasterId: "owner", title: "Forest sunrise" },
+  ];
+  room.data.settings.autoFire = true;
+  room.data.window = ["one", "two", "three"].map((user) => ({
+    user,
+    at: Date.now(),
+  }));
+  room.data.candidate = {
+    ...room.data.clips[0],
+    score: 0.9,
+    runnerUp: 0.2,
+    matchedAt: Date.now(),
+  };
+  await room.queueCallback(room.data.candidate);
+  return result;
+}
+test("automatic callbacks persist a seven-second veto window and recheck safety at airtime", async () => {
+  const { room, state } = await queuedStudio();
+  assert.equal(room.data.history.length, 0);
+  assert.ok(room.data.pendingCallback.dueAt - Date.now() > 6500);
+  assert.equal(state.values.get("alarm"), room.data.pendingCallback.dueAt);
+  const dueAt = room.data.pendingCallback.dueAt;
+  await room.queueCallback(room.data.candidate);
+  assert.equal(room.data.pendingCallback.dueAt, dueAt);
+  await room.alarm();
+  assert.equal(room.data.history.length, 0);
+  room.data.pendingCallback.dueAt = Date.now() - 1;
+  await room.alarm();
+  assert.equal(room.data.history[0].id, "owned");
+  assert.equal(room.data.pendingCallback, undefined);
+});
+test("veto and disabling automatic airing cancel queued callbacks", async () => {
+  for (const action of ["veto", "settings", "pause"]) {
+    const { room, state } = await queuedStudio();
+    const r = await room.fetch(
+      req(
+        "/api/" + action,
+        action === "veto" ? { id: "owned" } : { autoFire: false },
+      ),
+    );
+    assert.equal(r.status, 200);
+    await room.alarm();
+    assert.equal(room.data.history.length, 0);
+    assert.equal(room.data.pendingCallback, undefined);
+    assert.equal(state.values.has("alarm"), false);
+  }
+});
+test("delayed callbacks cannot air after confidence, voices, or freshness fail", async () => {
+  for (const failure of [
+    "confidence",
+    "voices",
+    "stale",
+    "duplicate",
+    "owner",
+  ]) {
+    const { room } = await queuedStudio();
+    room.data.pendingCallback.dueAt = Date.now() - 1;
+    if (failure === "confidence") room.data.settings.threshold = 0.95;
+    if (failure === "voices") room.data.window = [];
+    if (failure === "stale") room.data.candidate.matchedAt = Date.now() - 60000;
+    if (failure === "duplicate") room.data.seen = ["owned"];
+    if (failure === "owner")
+      await room.setBroadcaster({
+        id: "new",
+        login: "new",
+        display_name: "New",
+      });
+    await room.alarm();
+    assert.equal(room.data.history.length, 0, failure);
+  }
+});
+test("bot success requires Twitch is_sent and failed delivery preserves the overlay callback", async () => {
+  for (const sent of [true, false]) {
+    const { room } = await queuedStudio();
+    const events = [];
+    room.emit = (event) => events.push(event);
+    room.data.settings.chatBot = true;
+    room.helix = async () => ({ data: [{ is_sent: sent }] });
+    await room.fire({
+      ...room.data.candidate,
+      date: "2026-10-31",
+      url: "https://clips.twitch.tv/owned",
+    });
+    assert.equal(room.data.history.length, 1);
+    assert.equal(room.data.botStatus.sent, sent);
+    assert.equal(
+      events.some((e) => e.type === "bot-sent"),
+      sent,
+    );
+    assert.equal(
+      events.some((e) => e.type === "error"),
+      !sent,
+    );
+  }
 });

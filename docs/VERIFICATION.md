@@ -1,25 +1,24 @@
 # Verification record
 
-- 23 engine/server tests: scenario retrieval, unrelated chatter, ambiguity, confidence, manual safety gates, cooldown, duplicate handling, vector semantics, public clip integrity, cross-origin enforcement, credential isolation, setting bounds, overlay authorization, vector persistence, rate-limit backoff, owner-only indexing, stale-candidate rejection, and separation of read-only overlay access from controller credentials.
-- Syntax checks for the Worker and frontend modules.
-- The full browser suite also passed against the deployed Cloudflare URL. The public health endpoint returned healthy, and the HTML response returned HTTP 200 with the configured security headers.
-- The captioned replay walkthrough is H.264, 1440 × 1000, 105 seconds, and contains no audio stream.
-- Isolated Chromium: replay produces the intended callback; separate overlay tab receives the event and remains transparent; real original-host clip player loads; library search, filters, and empty states; setting persistence; every view in light/dark at 1440px and 390px with no horizontal overflow; useful missing-credentials state; no application JavaScript errors.
-- Dependency audit: no known vulnerabilities after compatible security updates.
-- Actual OBS Studio 33.0.1 verification completed using a real browser source, native program recording, private WebSocket connection, and PNG alpha checks. Software browser rendering resolved a blank renderer on this Mac. See `OBS_VERIFICATION.md`.
-- The owner confirmed successful Twitch account authorization. Helix reports zero clips and an offline channel, so actual own-channel retrieval and a live broadcast segment remain pending.
+## Current owned-channel build
 
-- Dedicated overlay HTML was checked before script execution to confirm it contains no dashboard content. Primary phone controls meet 44px tap targets, the animated phone card stays inside the preview, and the live workspace restores library/history in a mocked-session browser check.
-- Production requests verified that the overlay key cannot authorize studio settings and that the controller cookie is separate.
-- The embedded player may emit a browser keyboard-layout permission notice; the browser suite records external-player notices separately from application errors.
+- Confirmed owner: `sjathedude`, Helix broadcaster `1599601409`. Real authentication and Get Users/Get Clips succeeded using ignored credentials. The latest archive contains zero published clips and has an explicit awaiting-clips state. No foreign or fictional clip is substituted.
+- 29 passing engine/server tests cover title-derived fixture retrieval, unrelated chatter, ambiguity, manual safety gates, cooldown, duplicates, vector persistence, origin/controller/overlay boundaries, Twitch rate-limit backoff, ownership, stale candidates, account changes, persistent seven-second veto timing and cancellation, and actual `is_sent` response handling.
+- Fixture clips are used only in tests and never shipped as demo content. Owned-archive metadata checks require the confirmed owner. Production readiness fails if there are no actual clips.
+- Module syntax checks pass. The video Python tools compile.
+- Fresh isolated browser contexts passed at 390px and 1440px in both system themes. Every view has no horizontal overflow; no application or browser console error was observed in these cold checks. No Twitch account or visitor credentials were supplied.
+- The broader browser suite passed pending-state behavior, settings persistence, phone controls, all views/themes, configured authorization UI, and mocked live-library/history restoration. This does not verify live Twitch message delivery.
+- The activity graph is driven by received messages, with a real rolling one-minute count and 45-second buckets. Callback bot messages are excluded from live retrieval input.
+- An actual OBS Studio 33.0.1 browser source loaded the updated local build at 1920 × 1080, established its private overlay connection, and produced an idle PNG with alpha extrema `[0, 0]`. The test preserved the selected scene. See `OBS_IDLE_VERIFICATION.json`.
+- Kokoro v1.0 ONNX, voice `af_heart`, generated a 165-second narration track including intentional pauses and 23 measured caption cues. The final video still needs actual owner recordings and frame review.
+- GitHub repository metadata reports public visibility, MIT License, and the correct Cloudflare live URL.
 
-- 31 October 2026: production Twitch secrets configured from ignored local files. Twitch app-token acquisition and validation succeeded, as did an authenticated Helix game-metadata request. Production configuration and the OAuth start route were checked. The owner subsequently confirmed broadcaster authorization; the full live-channel flow remains pending.
+## Checks that remain pending
 
-- All six LIRIK demo clips were indexed through Helix with broadcaster ownership checks, original thumbnails, timestamps, actual durations, and clip-creator attribution.
-- Deployed BGE neural retrieval returned the intended match for all four natural chat scenarios. Final-window similarities ranged from 0.777 to 0.887, with runner-up separation from 0.246 to 0.314. These are cosine similarities, not calibrated confidence probabilities.
-- The public neural endpoint accepts only finite scripted windows, coalesces in-flight work, caches vectors/results, and enforces an edge inference budget. A labeled local fallback is available.
+- Index at least one published owner clip, inspect its original metadata/thumbnail, and regenerate the title-based public replay. Prefer at least three distinct clips for separate recording takes.
+- Run deployed neural retrieval for each owned scenario, inspect intended match and margin, and test account-free callback delivery end to end. Previous public-library retrieval results are not evidence for the new archive.
+- Receive real EventSub messages from the authorized channel, match actual chat, exercise the veto countdown, and observe Twitch-confirmed original-link posting.
+- Verify actual OBS on-air playback and transparent exit with the owned clips. Historical development playback worked, but its third-party media was removed from the current submission assets.
+- Assemble the owner’s recordings, burn captions, review every frame and the full audio, create the final desktop file, upload publicly to YouTube, and complete Devpost.
 
-- Demo/live overlay modes are separate; a live-mode source discards demo broadcasts. The private OBS scene export retains the selected source mode and 1920 × 1080 dimensions.
-- The clip iframe is initialized only after its entrance is visible. Actual OBS recording samples confirm original clip motion, alongside transparent idle/exit alpha checks.
-
-- Account-switch isolation tests verify archive/history clearing and overlay-key revocation, same-account reconnect preservation, and a final airing check that rejects foreign or unindexed clips.
+Do not mark the project fully submission-ready while these checks are open.

@@ -79,10 +79,7 @@ function toast(message, error = false) {
   toastTimer = setTimeout(() => el.classList.remove("visible"), 5000);
 }
 function artwork(c) {
-  return (
-    c.thumbnail ||
-    `/assets/${["city", "space", "tactic"].includes(c.art) ? c.art : c.art === "flight" ? "landscape" : "memory"}.svg`
-  );
+  return c.thumbnail || "/assets/memory.svg";
 }
 let airTimer;
 function callbackMarkup(c, { demo = true, auto = false } = {}) {
@@ -249,6 +246,35 @@ function startStudio() {
     scenario: 0,
     scenarioFired: false,
   };
+  const demoOwner = demoLibrary.broadcaster.name;
+  $("#channel-name").textContent = `${demoOwner}’s archive`;
+  $("#channel-detail").textContent =
+    `${demoClips.length} real clips · ${scenarios.length} replay scenarios`;
+  $(".source-link").href = demoLibrary.broadcaster.url;
+  $(".nav-count").textContent = demoClips.length;
+  $("#stat-clips").innerHTML = `${demoClips.length}<span>clips</span>`;
+  $("#scenario").innerHTML = scenarios
+    .map(
+      (scenario, i) => `<option value="${i}">${esc(scenario.label)}</option>`,
+    )
+    .join("");
+  $("#library-subtitle").textContent =
+    `Real clips from ${demoOwner}’s own channel. No borrowed archive.`;
+  $(".credit-card").href = demoLibrary.broadcaster.url;
+  $(".credit-card strong").textContent = demoOwner;
+  $(".credit-avatar").textContent = demoOwner[0].toUpperCase();
+  if (!demoClips.length) {
+    $("#play").disabled = true;
+    $("#stage-play").disabled = true;
+    $("#stage-play").textContent = "First memories are being recorded";
+    $("#scenario").disabled = true;
+    $("#test-overlay").disabled = true;
+    $("#stage-idle p").textContent = "Your first memories are being recorded.";
+    $("#stage-idle>span").textContent =
+      "The owner is creating original clips. The account-free replay will follow their first index.";
+    $(".demo-banner p span").textContent =
+      " The owner is recording original clips. No third-party archive is used.";
+  }
   let lastTick = 0,
     tickTimer,
     socket,
@@ -256,14 +282,59 @@ function startStudio() {
     eventsub,
     liveBatch = [],
     batchTimer,
-    reconnectURL = null,
-    liveActive = false;
+    liveActive = false,
+    pendingTick;
+  const chatTimes = [];
   const bars = $("#signal-bars");
+  bars.setAttribute("role", "img");
+  bars.setAttribute("aria-label", "Chat activity over the last 45 seconds");
   bars.innerHTML = Array.from(
     { length: 45 },
     (_, i) =>
       `<i style="--amplitude:${2 + ((i * 13) % 8)};--delay:${-(i % 7) * 0.13}s"></i>`,
   ).join("");
+  function updateVelocity() {
+    const now = Date.now();
+    while (chatTimes[0] < now - 60000) chatTimes.shift();
+    const buckets = Array.from(
+      { length: 45 },
+      (_, i) =>
+        chatTimes.filter(
+          (at) => at >= now - (45 - i) * 1000 && at < now - (44 - i) * 1000,
+        ).length,
+    );
+    const peak = Math.max(3, ...buckets);
+    [...bars.children].forEach((bar, i) => {
+      bar.style.transform = `scaleY(${0.08 + (buckets[i] / peak) * 0.92})`;
+    });
+    $("#chat-rate").textContent = String(chatTimes.length);
+    bars.setAttribute(
+      "aria-label",
+      `${chatTimes.length} messages in the last minute; 45-second activity graph`,
+    );
+  }
+  setInterval(updateVelocity, 1000);
+  updateVelocity();
+  function renderPending(pending) {
+    clearInterval(pendingTick);
+    state.pendingCallback = pending;
+    const update = () => {
+      const el = $("#pending-callback");
+      if (!el) return;
+      el.hidden = !pending;
+      if (pending) {
+        const seconds = Math.max(
+          0,
+          Math.ceil((pending.dueAt - Date.now()) / 1000),
+        );
+        el.textContent = seconds
+          ? `Airs in ${seconds}s · veto to hold this memory`
+          : "Checking airing rules…";
+      }
+    };
+    update();
+    if (pending) pendingTick = setInterval(update, 200);
+  }
   function view(name) {
     $$(".view").forEach((el) => {
       el.hidden = el.id !== name + "-view";
@@ -380,6 +451,10 @@ function startStudio() {
     $("#engine-status").classList.toggle("airing-label", status === "On air");
   }
   function addChat(user, text, bot = false) {
+    if (!bot) {
+      chatTimes.push(Date.now());
+      updateVelocity();
+    }
     const log = $("#chat-log");
     log.querySelector(".chat-empty")?.remove();
     const el = document.createElement("div");
@@ -401,7 +476,10 @@ function startStudio() {
     state.candidate = c;
     const container = $("#candidate");
     container.classList.remove("hidden");
-    container.innerHTML = `<div class="candidate-header"><span>${verdict.ok ? "A FAMILIAR MOMENT" : "CONNECTION HELD"}</span><span>${Math.round(c.score * 100)}% match</span></div><h4>${esc(c.title)}</h4><p>${esc(c.reason)}</p><p style="margin-top:6px">${esc(verdict.reason)}</p><div class="candidate-controls"><button class="button primary" id="fire-candidate" ${verdict.ok ? "" : "disabled"}>${icon("play")} Air callback</button><button class="button button-white" id="veto-candidate">Veto</button></div>`;
+    container.innerHTML = `<div class="candidate-header"><span>${verdict.ok ? "A FAMILIAR MOMENT" : "CONNECTION HELD"}</span><span>${Math.round(c.score * 100)}% match</span></div><h4>${esc(c.title)}</h4><p>${esc(c.reason)}</p><p style="margin-top:6px">${esc(verdict.reason)}</p><p id="pending-callback" class="pending-callback" role="status" hidden></p><div class="candidate-controls"><button class="button primary" id="fire-candidate" ${verdict.ok ? "" : "disabled"}>${icon("play")} Air callback</button><button class="button button-white" id="veto-candidate">Veto</button></div>`;
+    renderPending(
+      state.pendingCallback?.id === c.id ? state.pendingCallback : null,
+    );
     $("#fire-candidate").onclick = () => fire(c);
     $("#veto-candidate").onclick = async () => {
       if (state.mode === "live") {
@@ -463,6 +541,7 @@ function startStudio() {
     );
   }
   function receiveCallback(c, demo = true, preview = false) {
+    if (!preview) renderPending(null);
     clearTimeout(airTimer);
     showCard($("#callback-card"), c, {
       demo,
@@ -682,6 +761,8 @@ function startStudio() {
           : "Ready when you are";
   }
   function resetReplay() {
+    chatTimes.length = 0;
+    renderPending(null);
     state.generation = (state.generation || 0) + 1;
     state.appliedIndex = 0;
     clearInterval(tickTimer);
@@ -746,9 +827,6 @@ function startStudio() {
     $("#timeline-progress").style.transform = `scaleX(${state.elapsed / 45})`;
     $("#replay-time").textContent = time(state.elapsed);
     $(".stage-clock").textContent = time(state.elapsed);
-    $("#chat-rate").textContent = String(
-      Math.round((state.messages.length / Math.max(1, state.elapsed)) * 60),
-    );
     if (state.elapsed >= 45) {
       state.playing = false;
       clearInterval(tickTimer);
@@ -813,7 +891,7 @@ function startStudio() {
       ? list
           .map(
             (c) =>
-              `<article class="panel clip-card"><div class="clip-art"><img src="${esc(artwork(c))}" alt="${c.thumbnail ? "Original clip thumbnail" : "Original memory illustration; not gameplay"}" loading="lazy" width="600" height="340"><span class="category-tag">${esc(c.category)}</span><span class="clip-duration">${state.mode === "demo" ? "DEMO ARCHIVE" : time(c.duration)}</span></div><div class="clip-card-body"><h3>${esc(c.title)}</h3><div class="clip-card-meta"><span>${date(c.date)}</span><span>${num(c.views)} views</span></div><p class="clip-reason">${state.mode === "demo" ? "A public memory from LIRIK’s archive. Play the original clip or preview its overlay entrance." : "Indexed from your connected channel. Ready for a distinctive live connection."}</p><div class="clip-actions"><button class="button button-white" data-watch="${esc(c.id)}">${icon("play")} Watch clip</button><button class="button button-white" data-preview="${esc(c.id)}">Preview overlay ↗</button></div></div></article>`,
+              `<article class="panel clip-card"><div class="clip-art"><img src="${esc(artwork(c))}" alt="Original clip thumbnail" loading="lazy" width="600" height="340"><span class="category-tag">${esc(c.category)}</span><span class="clip-duration">${time(c.duration)}</span></div><div class="clip-card-body"><h3>${esc(c.title)}</h3><div class="clip-card-meta"><span>${date(c.date)}</span><span>${num(c.views)} views</span></div><p class="clip-reason">${state.mode === "demo" ? `An original memory from ${esc(demoOwner)}’s own channel. Play the clip or preview its overlay entrance.` : "Indexed from your connected channel. Ready for a distinctive live connection."}</p><div class="clip-actions"><button class="button button-white" data-watch="${esc(c.id)}">${icon("play")} Watch clip</button><button class="button button-white" data-preview="${esc(c.id)}">Preview overlay ↗</button></div></div></article>`,
           )
           .join("")
       : '<div class="library-empty"><span>↶</span><h3>A memory is waiting to be found.</h3><p>' +
@@ -852,7 +930,7 @@ function startStudio() {
   function previewOverlay(
     c = state.mode === "live"
       ? state.clips[0]
-      : demoClips[scenarios[state.scenario].clip],
+      : demoClips[scenarios[state.scenario]?.clip],
   ) {
     if (!c) {
       toast("Index your own clips before previewing a live overlay.", true);
@@ -1015,6 +1093,7 @@ function startStudio() {
     resetReplay();
     state.mode = "live";
     state.clips = state.session.clips || [];
+    $("#test-overlay").disabled = !state.clips.length;
     state.lastFire = state.session.lastFire || 0;
     state.seen = state.session.seen || [];
     state.history = (state.session.history || []).map((moment) => ({
@@ -1090,10 +1169,26 @@ function startStudio() {
     categories();
     settingsUI();
     renderLibrary();
+    if (state.session.candidate) {
+      const candidate = state.session.candidate;
+      renderCandidate(
+        candidate,
+        decision(candidate, {
+          ...state.settings,
+          lastFire: state.lastFire,
+          seen: state.seen,
+          runnerUp: candidate.runnerUp,
+        }),
+      );
+      renderPending(state.session.pendingCallback);
+    }
     view("studio");
   }
   function stopLive() {
     liveActive = false;
+    liveBatch = [];
+    renderPending(null);
+    api("/api/pause", {}).catch((e) => toast(e.message, true));
     eventsub?.close();
     clearInterval(batchTimer);
     $("#listen").innerHTML = icon("chat") + " Listen to my chat";
@@ -1107,12 +1202,14 @@ function startStudio() {
     );
   }
   function startLive() {
+    if (liveActive) return;
     if (!state.clips.length) {
       toast("Index your own clips before starting the engine.", true);
       view("library");
       return;
     }
     liveActive = true;
+    liveBatch = [];
     $("#listen").innerHTML = icon("pause") + " Stop listening";
     $("#replay-status").textContent = "Connecting to your live chat…";
     engine(
@@ -1138,6 +1235,7 @@ function startStudio() {
       stopLive();
       return;
     }
+    const transferring = url !== "wss://eventsub.wss.twitch.tv/ws";
     const next = new WebSocket(url);
     eventsub = next;
     let keepalive;
@@ -1150,9 +1248,15 @@ function startStudio() {
           next.close();
         }, 45000);
         if (type === "session_welcome") {
-          if (!reconnectURL)
-            await api("/api/eventsub", { sessionId: event.payload.session.id });
-          reconnectURL = null;
+          if (!transferring) {
+            const subscription = await api("/api/eventsub", {
+              sessionId: event.payload.session.id,
+            });
+            if (!subscription.connected)
+              throw new Error(
+                "Twitch did not establish the chat subscription. Reconnect and try again.",
+              );
+          }
           $("#replay-status").textContent = "Listening to #" + state.user.login;
           bars.classList.add("listening");
           engine(
@@ -1164,16 +1268,19 @@ function startStudio() {
         if (type === "notification") {
           const m = event.payload.event;
           if (m.message?.text) {
+            if (
+              m.chatter_user_id === state.user.id &&
+              m.message.text.startsWith("↶ Callback:")
+            )
+              return;
             const msg = { user: m.chatter_user_name, text: m.message.text };
             liveBatch.push(msg);
             if (liveBatch.length > 200) liveBatch.shift();
             addChat(msg.user, msg.text);
-            $("#chat-rate").textContent = String(liveBatch.length * 12);
           }
         }
         if (type === "session_reconnect") {
-          reconnectURL = event.payload.session.reconnect_url;
-          openEventsub(reconnectURL);
+          openEventsub(event.payload.session.reconnect_url);
           next.close();
         }
         if (type === "revocation") {
@@ -1221,6 +1328,17 @@ function startStudio() {
         renderCandidate(event.candidate, event.verdict);
         renderDirector(event.matches || [event.candidate], "live");
       }
+      if (event.type === "callback-pending" && state.mode === "live")
+        renderPending(event.pending);
+      if (event.type === "veto" && state.mode === "live") {
+        renderPending(null);
+        if (state.candidate?.id === event.id) {
+          state.candidate = null;
+          $("#candidate").classList.add("hidden");
+        }
+      }
+      if (event.type === "bot-sent" && state.mode === "live")
+        toast("Twitch confirmed the callback link was posted in chat.");
       if (event.type === "error") {
         toast(event.message, true);
         $("#index-clips").disabled = false;
@@ -1235,6 +1353,7 @@ function startStudio() {
         state.session.clips = event.clips;
         if (state.mode === "live") {
           state.clips = event.clips;
+          $("#test-overlay").disabled = !state.clips.length;
           $("#stat-clips").innerHTML = event.count + "<span>clips</span>";
           $(".nav-count").textContent = event.count;
           $("#channel-detail").textContent =

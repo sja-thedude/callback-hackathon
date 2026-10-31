@@ -1,6 +1,18 @@
 import fs from "node:fs";
 import { parseEnv } from "node:util";
-import { clips as selection } from "../public/data.js";
+import { normalizeClip } from "../src/clip-index.js";
+import { buildScenarios } from "../public/replay.js";
+
+const args = process.argv.slice(2);
+const login = args[args.indexOf("--channel") + 1]?.toLowerCase();
+if (!args.includes("--channel") || !/^[a-z0-9_]{3,25}$/.test(login || ""))
+  throw new Error(
+    "Usage: npm run index:demo -- --channel YOUR_LOGIN --owned-content",
+  );
+if (!args.includes("--owned-content"))
+  throw new Error(
+    "Only publish clips you own. Pass --owned-content after confirming the content is yours.",
+  );
 const local = fs.existsSync(".env")
   ? parseEnv(fs.readFileSync(".env", "utf8"))
   : {};
@@ -27,15 +39,13 @@ const auth = await fetch("https://id.twitch.tv/oauth2/token", {
   }),
 });
 if (!auth.ok)
-  throw new Error(
-    "Twitch app authentication failed (HTTP " + auth.status + ").",
-  );
+  throw new Error(`Twitch app authentication failed (HTTP ${auth.status}).`);
 const token = (await auth.json()).access_token;
 let blockedUntil = 0;
 async function helix(path) {
   if (Date.now() < blockedUntil)
-    await new Promise((resolve) =>
-      setTimeout(resolve, Math.min(60000, blockedUntil - Date.now())),
+    throw new Error(
+      `Twitch rate limit cooling down. Retry in ${Math.ceil((blockedUntil - Date.now()) / 1000)} seconds.`,
     );
   const response = await fetch("https://api.twitch.tv/helix/" + path, {
     headers: { "Client-Id": clientId, Authorization: "Bearer " + token },
@@ -50,68 +60,96 @@ async function helix(path) {
   }
   if (!response.ok)
     throw new Error(
-      "Twitch metadata request failed (HTTP " + response.status + ").",
+      `Twitch metadata request failed (HTTP ${response.status}).`,
     );
   if (response.headers.get("Ratelimit-Remaining") === "0")
-    blockedUntil = Number(response.headers.get("Ratelimit-Reset")) * 1000;
+    blockedUntil =
+      Number(response.headers.get("Ratelimit-Reset")) * 1000 ||
+      Date.now() + 60000;
   return response.json();
 }
-const broadcaster = (await helix("users?login=lirik")).data[0];
-if (!broadcaster)
-  throw new Error("The credited demo broadcaster was not found.");
-const data = (
-  await helix(
-    "clips?" + selection.map((c) => "id=" + encodeURIComponent(c.id)).join("&"),
-  )
-).data;
-const byId = new Map(data.map((c) => [c.id, c]));
-const missing = selection.filter((c) => !byId.has(c.id));
-if (missing.length)
-  throw new Error(
-    `${missing.length} selected clips are unavailable. Keep the previous verified library until the selection is repaired.`,
+const broadcaster = (await helix("users?login=" + encodeURIComponent(login)))
+  .data[0];
+if (!broadcaster) throw new Error("The selected broadcaster was not found.");
+const all = [];
+let cursor;
+for (let page = 0; page < 5; page++) {
+  const result = await helix(
+    `clips?broadcaster_id=${broadcaster.id}&first=100${cursor ? "&after=" + encodeURIComponent(cursor) : ""}`,
   );
-if (data.some((c) => c.broadcaster_id !== broadcaster.id))
+  if (result.data.some((c) => c.broadcaster_id !== broadcaster.id))
+    throw new Error("A foreign clip was returned. No files were updated.");
+  all.push(...result.data);
+  cursor = result.pagination?.cursor;
+  if (!cursor) break;
+}
+if (!all.length && !args.includes("--publish-empty"))
   throw new Error(
-    "A selected clip belongs to another broadcaster. No files were updated.",
+    `No published clips found for ${login}. Publish your clips, then run this command again. No files were changed.`,
   );
-const ids = [...new Set(data.map((c) => c.game_id).filter(Boolean))];
-const games = new Map(
-  (await helix("games?" + ids.map((id) => "id=" + id).join("&"))).data.map(
-    (g) => [g.id, g.name],
-  ),
-);
+const selected = [...new Map(all.map((c) => [c.id, c])).values()]
+  .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
+  .slice(0, 6);
+const ids = [...new Set(selected.map((c) => c.game_id).filter(Boolean))];
+const games = ids.length
+  ? Object.fromEntries(
+      (
+        await helix(
+          "games?" + ids.map((id) => "id=" + encodeURIComponent(id)).join("&"),
+        )
+      ).data.map((g) => [g.id, g.name]),
+    )
+  : {};
 const library = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   source: "Twitch Helix",
   indexedAt: new Date().toISOString(),
+  ownedContent: true,
+  status: selected.length ? "ready" : "awaiting-clips",
   broadcaster: {
     id: broadcaster.id,
-    login: broadcaster.login,
+    login,
     name: broadcaster.display_name,
-    url: "https://www.twitch.tv/" + broadcaster.login,
+    url: "https://www.twitch.tv/" + login,
   },
-  clips: selection.map((selected) => {
-    const c = byId.get(selected.id);
-    return {
-      id: c.id,
-      title: c.title,
-      category: games.get(c.game_id) || "Just Chatting",
-      gameId: c.game_id,
-      date: c.created_at,
-      views: c.view_count,
-      duration: c.duration,
-      thumbnail: c.thumbnail_url,
-      url: c.url,
-      broadcaster: c.broadcaster_name,
-      broadcasterId: c.broadcaster_id,
-      creator: c.creator_name,
-    };
-  }),
+  clips: selected.map((clip) => normalizeClip(clip, games, broadcaster)),
 };
+const scenarios = buildScenarios(library);
+const phrases = [
+  "# Live trigger phrases",
+  "",
+  `Channel **${library.broadcaster.name}** verified through Twitch Helix on ${library.indexedAt}. ${library.clips.length} published clips indexed.`,
+  "",
+  ...(!library.clips.length
+    ? [
+        "**No owned clips have been published yet. Exact trigger phrases are pending the real index.**",
+        "",
+      ]
+    : []),
+  "Use three real chatters in the channel within 30 seconds. Each person sends their assigned line once, a few seconds apart. Keep the studio listening and wait up to 15 seconds for a candidate. These are metadata-based trigger suggestions; the deployed neural check must confirm them before filming. Do not use multiple browser tabs of the same account as independent voices.",
+  "",
+  ...library.clips.flatMap((clip, i) => [
+    `## ${i + 1}. ${clip.title}`,
+    "",
+    `[Original clip](${clip.url})`,
+    "",
+    `- Chatter 1: ${clip.title}`,
+    `- Chatter 2: I remember ${clip.title}`,
+    `- Chatter 3: Bring back the ${clip.title} clip`,
+    "",
+  ]),
+  "## Near-miss take",
+  "",
+  "After at least 35 seconds of unrelated conversation, have the three chatters discuss an unrelated topic, such as planning a train journey. Check that the candidate is held below threshold or for ambiguity; do not claim a held match unless the real verdict shows it. A separate safe test is to raise sensitivity to 95% and observe the actual verdict, clearly showing the setting.",
+  "",
+  "Automatic callbacks have a seven-second veto window. A vetoed or aired clip cannot air again in that studio session. Use a different indexed clip for the next take and respect the cooldown; do not weaken the gates to force a recording.",
+  "",
+].join("\n");
 fs.writeFileSync(
   "public/demo-library.js",
   "export const demoLibrary = " + JSON.stringify(library, null, 2) + ";\n",
 );
+fs.writeFileSync("docs/TRIGGER_PHRASES.md", phrases);
 console.log(
-  `Indexed ${library.clips.length} API-verified ${library.broadcaster.name} clips. No credentials or tokens were written.`,
+  `Indexed ${library.clips.length} owned-channel ${library.broadcaster.name} clips and prepared ${scenarios.length} replay scenarios. No credentials or tokens were written.`,
 );

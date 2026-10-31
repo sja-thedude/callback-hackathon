@@ -1,8 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { retrieveDemo } from "../src/demo.js";
+import { createDemoRetriever } from "../src/demo.js";
 import { embed } from "../public/engine.js";
-import { demoLibrary, clips } from "../public/data.js";
+import { demoLibrary } from "../public/data.js";
+import { library, clips, scenarios } from "./fixtures.js";
+const retrieveDemo = createDemoRetriever({
+  library,
+  archive: clips,
+  replay: scenarios,
+});
 const request = (body) =>
   new Request("https://callback.example/api/demo/search", {
     method: "POST",
@@ -10,13 +16,33 @@ const request = (body) =>
   });
 test("demo index has verified ownership and real clip metadata", () => {
   assert.equal(demoLibrary.source, "Twitch Helix");
-  assert.equal(demoLibrary.broadcaster.id, "23161357");
-  for (const c of clips) {
+  assert.equal(demoLibrary.ownedContent, true);
+  assert.equal(demoLibrary.broadcaster.login, "sjathedude");
+  assert.equal(demoLibrary.broadcaster.id, "1599601409");
+  for (const c of demoLibrary.clips) {
     assert.equal(c.broadcasterId, demoLibrary.broadcaster.id);
     assert.ok(c.thumbnail.startsWith("https://"));
     assert.ok(c.duration > 0);
     assert.ok(c.creator);
   }
+});
+test("an unpublished owner archive cannot silently fall back to foreign or fictional clips", async () => {
+  const empty = createDemoRetriever({ library, archive: [], replay: [] });
+  assert.equal(
+    (await empty(request({ scenario: 0, index: 3 }), {})).status,
+    503,
+  );
+});
+test("public retrieval rejects a foreign clip even if its metadata was accidentally installed", async () => {
+  const foreign = createDemoRetriever({
+    library,
+    archive: [{ ...clips[0], broadcasterId: "other" }],
+    replay: scenarios,
+  });
+  assert.equal(
+    (await foreign(request({ scenario: 0, index: 3 }), {})).status,
+    503,
+  );
 });
 test("neural demo rejects arbitrary or malformed query windows before inference", async () => {
   for (const payload of [
