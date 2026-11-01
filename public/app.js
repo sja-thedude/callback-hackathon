@@ -82,9 +82,16 @@ function artwork(c) {
   return c.thumbnail || "/assets/memory.svg";
 }
 let airTimer;
+function ownedMedia(c) {
+  const clip = demoClips.find(
+    (item) => item.id === c.id && item.broadcasterId === c.broadcasterId,
+  );
+  return clip?.mediaUrl?.startsWith("/media/owned-") ? clip.mediaUrl : null;
+}
 function callbackMarkup(c, { demo = true, auto = false } = {}) {
+  const media = ownedMedia(c);
   const embed = `https://clips.twitch.tv/embed?clip=${encodeURIComponent(c.id)}&parent=${encodeURIComponent(location.hostname)}&autoplay=true&muted=true`;
-  return `<div class="callback-top"><span class="callback-badge"><span>↶</span> A MOMENT RETURNS</span><span class="callback-date">${date(c.date)}</span></div><div class="callback-image"><img src="${esc(artwork(c))}" alt="${c.thumbnail ? "Original clip thumbnail" : "Original memory illustration; not gameplay"}">${auto ? `<iframe data-clip-src="${embed}" style="visibility:hidden" title="${esc(c.title)} — original clip" allow="autoplay; fullscreen" allowfullscreen></iframe>` : `<button class="callback-play" data-playclip="${esc(c.id)}" aria-label="Play original clip">${icon("play")}</button><span class="callback-art-label">${c.thumbnail ? "Original clip" : "Original illustration · play the original clip ↗"}</span>`}</div><div class="callback-detail"><h3>${esc(c.title)}</h3><p>${esc(c.reason || "Chat remembered. Your archive answered.")}</p><a href="https://clips.twitch.tv/${encodeURIComponent(c.id)}" target="_blank" rel="noreferrer">${demo ? "Demo archive · " : ""}${esc(c.broadcaster || "Your channel")} · Watch original ↗</a></div><div class="callback-timer"></div>`;
+  return `<div class="callback-top"><span class="callback-badge"><span>↶</span> ${c.rehearsal ? "OWNER REHEARSAL" : "A MOMENT RETURNS"}</span><span class="callback-date">${date(c.date)}</span></div><div class="callback-image"><img src="${esc(artwork(c))}" alt="${c.thumbnail ? "Original clip thumbnail" : "Original memory illustration; not gameplay"}">${auto && media ? `<video data-clip-src="${esc(media)}" style="visibility:hidden" title="${esc(c.title)} — owned original clip" muted autoplay playsinline></video>` : auto ? `<iframe data-clip-src="${embed}" style="visibility:hidden" title="${esc(c.title)} — original clip" allow="autoplay; fullscreen" allowfullscreen></iframe>` : `<button class="callback-play" data-playclip="${esc(c.id)}" aria-label="Play original clip">${icon("play")}</button><span class="callback-art-label">${c.thumbnail ? "Original clip" : "Original illustration · play the original clip ↗"}</span>`}</div><div class="callback-detail"><h3>${esc(c.title)}</h3><p>${esc(c.reason || "Chat remembered. Your archive answered.")}</p><a href="https://clips.twitch.tv/${encodeURIComponent(c.id)}" target="_blank" rel="noreferrer">${demo ? "Demo archive · " : ""}${esc(c.broadcaster || "Your channel")} · Watch original ↗</a></div><div class="callback-timer"></div>`;
 }
 function showCard(element, c, options = {}) {
   element.className = "callback-card";
@@ -92,13 +99,16 @@ function showCard(element, c, options = {}) {
   element.style.setProperty("--airtime", `${options.duration || 20}s`);
   void element.offsetWidth;
   element.classList.add("airing");
-  const frame = element.querySelector("iframe[data-clip-src]");
+  const frame = element.querySelector(
+    "iframe[data-clip-src],video[data-clip-src]",
+  );
   if (frame)
     setTimeout(
       () => {
         if (!frame.isConnected || !element.classList.contains("airing")) return;
         frame.style.visibility = "visible";
         frame.src = frame.dataset.clipSrc;
+        if (frame.tagName === "VIDEO") frame.play().catch(() => {});
       },
       matchMedia("(prefers-reduced-motion:reduce)").matches ? 0 : 650,
     );
@@ -247,6 +257,7 @@ function startStudio() {
     scenarioFired: false,
   };
   const demoOwner = demoLibrary.broadcaster.name;
+  $(".avatar").textContent = demoOwner[0].toUpperCase();
   $("#channel-name").textContent = `${demoOwner}’s archive`;
   $("#channel-detail").textContent =
     `${demoClips.length} real clips · ${scenarios.length} replay scenarios`;
@@ -394,6 +405,10 @@ function startStudio() {
     $("#duration").value = s.duration;
     $("#auto-fire").checked = s.autoFire;
     $("#chat-bot").checked = s.chatBot;
+    $("#solo-rehearsal").checked = !!s.soloRehearsal;
+    if (state.mode === "live")
+      $(".demo-label").innerHTML =
+        `<span class="status-dot"></span> ${s.soloRehearsal ? "OWNER REHEARSAL · REAL CHAT" : "LIVE WORKSPACE"}`;
     settingLabels();
     $("#confidence-hint").textContent =
       `${Math.round(s.threshold * 100)}% min. confidence`;
@@ -423,6 +438,7 @@ function startStudio() {
         duration: Number($("#duration").value),
         autoFire: $("#auto-fire").checked,
         chatBot: $("#chat-bot").checked,
+        soloRehearsal: $("#solo-rehearsal").checked,
       };
       await api("/api/settings", s);
       state.settings = s;
@@ -570,11 +586,12 @@ function startStudio() {
         `Last callback · ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
       $("#stat-confidence").innerHTML =
         `${Math.round((c.score || 0.9) * 100)}<span>% semantic similarity</span>`;
-      addChat(
-        "callback",
-        `↶ Remember this? ${c.title} · ${date(c.date)}${demo ? " [demo]" : ""}`,
-        true,
-      );
+      if (demo)
+        addChat(
+          "callback",
+          `↶ Remember this? ${c.title} · ${date(c.date)}${demo ? " [demo]" : ""}`,
+          true,
+        );
     }
     $("#candidate").classList.add("hidden");
     airTimer = setTimeout(() => {
@@ -605,7 +622,7 @@ function startStudio() {
     list.innerHTML = state.history
       .map(
         (c) =>
-          `<article class="trail-item"><time>${new Date(c.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time><div><h4>${esc(c.title)}</h4><p>${esc(c.reason)}</p><div class="trail-evidence"><span>Threshold cleared</span><span>Distinctive match</span><span>${c.source === "scripted-replay" ? "Scripted replay" : "Own channel"}</span></div></div><span class="trail-score">${Math.round((c.score || 0.9) * 100)}%</span></article>`,
+          `<article class="trail-item"><time>${new Date(c.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time><div><h4>${esc(c.title)}</h4><p>${esc(c.reason)}</p><div class="trail-evidence"><span>Threshold cleared</span><span>Distinctive match</span><span>${c.source === "scripted-replay" ? "Scripted replay" : c.rehearsal ? "Owner rehearsal" : "Own channel"}</span></div></div><span class="trail-score">${Math.round((c.score || 0.9) * 100)}%</span></article>`,
       )
       .join("");
   }
@@ -659,7 +676,9 @@ function startStudio() {
       [
         new Set(state.messages.map((m) => m.user)).size >= 3 ||
           state.mode === "live",
-        "Multiple voices",
+        state.settings.soloRehearsal && state.mode === "live"
+          ? "Broadcaster rehearsal"
+          : "Multiple voices",
       ],
       [
         Date.now() - state.lastFire >=
@@ -1129,6 +1148,7 @@ function startStudio() {
     $(".demo-banner button").innerHTML = "Back to demo ↗";
     $(".onair").innerHTML = '<span class="status-dot"></span> LIVE CHANNEL';
     $("#channel-name").textContent = state.user.name;
+    $(".avatar").textContent = state.user.name[0].toUpperCase();
     $("#channel-detail").textContent =
       state.clips.length + " indexed clips · your channel only";
     $(".source-link").href =
@@ -1262,7 +1282,9 @@ function startStudio() {
           engine(
             "Listening",
             "Your community is the signal.",
-            "Waiting for three voices and a distinctive connection.",
+            state.settings.soloRehearsal
+              ? "Owner rehearsal: waiting for your real chat and a distinctive connection."
+              : "Waiting for three voices and a distinctive connection.",
           );
         }
         if (type === "notification") {
@@ -1271,9 +1293,15 @@ function startStudio() {
             if (
               m.chatter_user_id === state.user.id &&
               m.message.text.startsWith("↶ Callback:")
-            )
+            ) {
+              addChat(m.chatter_user_name, m.message.text, true);
               return;
-            const msg = { user: m.chatter_user_name, text: m.message.text };
+            }
+            const msg = {
+              user: m.chatter_user_name,
+              userId: m.chatter_user_id,
+              text: m.message.text,
+            };
             liveBatch.push(msg);
             if (liveBatch.length > 200) liveBatch.shift();
             addChat(msg.user, msg.text);

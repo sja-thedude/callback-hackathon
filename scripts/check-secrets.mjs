@@ -5,7 +5,7 @@ import { spawnSync } from "node:child_process";
 const local = fs.existsSync(".env")
   ? parseEnv(fs.readFileSync(".env", "utf8"))
   : {};
-const values = ["TWITCH_CLIENT_ID", "TWITCH_CLIENT_SECRET"]
+const values = ["TWITCH_CLIENT_ID", "TWITCH_CLIENT_SECRET", "TWITCH_STREAM_KEY"]
   .map((key) => process.env[key] || local[key])
   .filter((value) => value?.length >= 8);
 if (values.length < 2)

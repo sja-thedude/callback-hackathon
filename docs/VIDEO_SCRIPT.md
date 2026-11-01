@@ -26,18 +26,18 @@ This is the planned final cut. Record the real behavior before using claims abou
 
 **Shot list:**
 
-| Time      | Shot                                                                                                            |
-| --------- | --------------------------------------------------------------------------------------------------------------- |
-| 0:40–0:50 | Open the connected studio and start Index my clips. Show actual fetch/embed progress and your returned library. |
-| 0:50–1:00 | Show the real chat connection and activity graph while three real chatters send the indexed trigger phrases.    |
-| 1:00–1:14 | Show the candidate explanation and competing matches in the director's desk.                                    |
-| 1:14–1:24 | Show an actual near miss held below threshold or for ambiguity. Keep the real verdict readable.                 |
-| 1:24–1:33 | Show a qualifying automatic match and the seven-second veto countdown. Veto one take to show cancellation.      |
-| 1:33–1:40 | Show a different qualifying callback and the confirmed original-link message. Respect cooldown between takes.   |
+| Time      | Shot                                                                                                                    |
+| --------- | ----------------------------------------------------------------------------------------------------------------------- |
+| 0:40–0:50 | Open the connected studio and start Index my clips. Show actual fetch/embed progress and your returned library.         |
+| 0:50–1:00 | Show the real chat connection and activity graph while the authorized owner sends real rehearsal messages through chat. |
+| 1:00–1:14 | Show the candidate explanation and competing matches in the director's desk.                                            |
+| 1:14–1:24 | Show an actual near miss held below threshold or for ambiguity. Keep the real verdict readable.                         |
+| 1:24–1:33 | Show a qualifying automatic match and the seven-second veto countdown. Veto one take to show cancellation.              |
+| 1:33–1:40 | Show a different qualifying callback and the confirmed original-link message. Respect cooldown between takes.           |
 
 **Narration:**
 
-> I connect my channel and explicitly index my own clips. The index uses real clip titles, categories, dates, and thumbnails from the API. Embeddings let the engine compare a rolling chat window with those memories. The activity graph shows messages actually received. The candidate feed explains the connection and shows competing matches. Three independent chatters, a strong score, and a clear lead over the next match are required. Here, the engine holds a near miss instead of forcing a callback. A qualifying automatic callback gives me seven seconds to veto it. Cooldown and duplicate checks protect the timing. When it airs, the bot posts the original clip link.
+> I connect my channel and explicitly index my own clips. The index uses real clip titles, categories, dates, and thumbnails from the API. Embeddings let the engine compare a rolling chat window with those memories. The activity graph shows messages actually received. The candidate feed explains the connection and shows competing matches. Community mode needs three voices. This recording uses a labeled rehearsal with my own live messages. Here, the engine holds a near miss instead of forcing a callback. A qualifying automatic callback gives me seven seconds to veto it. Cooldown and duplicate checks protect the timing. When it airs, the bot posts the original clip link.
 
 **Recording note:** Capture these as separate honest takes. Aired and vetoed memories cannot be reused in the same studio session. Save at least three distinctly titled clips for the opening, veto, and closing; if only one exists, capture the overlay proof first and wait to record the other claims. The graph reports received messages, not viewer count or measured engagement.
 

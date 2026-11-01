@@ -28,7 +28,7 @@ An account-free replay lets judges try the interaction without waiting for a str
 
 A Cloudflare Worker handles server-side Twitch authorization, token refresh, and Helix calls. The index retrieves original clip metadata, resolves game categories, verifies broadcaster ownership, and embeds titles plus categories with BGE Small English v1.5. Live and public demo indexing share metadata normalization and embedding input formatting. Vectors are stored in bounded records inside each private studio’s Durable Object.
 
-Authenticated EventSub WebSockets deliver channel chat. Batches build a rolling 30-second query window. Retrieval ranks clip vectors by cosine similarity. At least three distinct chatters, the configured threshold, and a minimum 0.08 lead over the next match are required. Automatic matches are queued for seven seconds, then checked again before airing. Manual approval cannot bypass the confidence and cooldown gates.
+Authenticated EventSub WebSockets deliver channel chat. Batches build a rolling 30-second query window. Retrieval ranks clip vectors by cosine similarity. Community mode requires at least three distinct chatters, the configured threshold, and a minimum 0.08 lead over the next match. A separately labeled owner-rehearsal mode permits the authorized broadcaster’s own real chat messages for testing; the retrieval and airtime gates still apply. Automatic matches are queued for seven seconds, then checked again before airing. Manual approval cannot bypass the confidence and cooldown gates.
 
 A separate read-only, key-protected WebSocket synchronizes the transparent OBS source. Demo and live source modes are isolated. The chat bot posts through the official Send Chat Message API and reports delivery only when Twitch confirms `is_sent`. Twitch rate-limit responses pause further requests. Credentials and OAuth tokens remain on the server.
 
@@ -50,7 +50,7 @@ The idea turns archive retrieval into a live production element. A shared joke c
 
 The app authorization and authenticated Helix access have succeeded. The owner confirmed the channel **sjathedude**. At the last index check it had no published clips. The current public dataset is therefore empty and explicitly awaiting the owner’s content; this is not a completed account-free replay test.
 
-There are 29 passing engine/server tests, syntax checks, and successful cold browser checks at 390px and 1440px in both themes. The updated idle source was tested in actual OBS Studio 33.0.1 at 1920 × 1080 and has a fully transparent alpha channel. Previous development testing verified animated on-air playback, but the owned-channel on-air take still needs recording. No previous third-party footage is included as final submission material.
+There are 34 passing engine/server tests, syntax checks, and successful cold browser checks at 390px and 1440px in both themes. The updated idle source was tested in actual OBS Studio 33.0.1 at 1920 × 1080 and has a fully transparent alpha channel. Previous development testing verified animated on-air playback, but the owned-channel on-air take still needs recording. No previous third-party footage is included as final submission material.
 
 Owned-channel clip indexing, real EventSub receipt, live retrieval, chat delivery, the replay against the owned archive, and on-air playback of those clips remain pending publication and a real live test. Raid/subscription/category triggers and VOD transcription are not implemented. Similarity scores are retrieval signals, not calibrated probabilities.
 

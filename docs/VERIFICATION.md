@@ -3,7 +3,7 @@
 ## Current owned-channel build
 
 - Confirmed owner: `sjathedude`, Helix broadcaster `1599601409`. Real authentication and Get Users/Get Clips succeeded using ignored credentials. The latest archive contains zero published clips and has an explicit awaiting-clips state. No foreign or fictional clip is substituted.
-- 29 passing engine/server tests cover title-derived fixture retrieval, unrelated chatter, ambiguity, manual safety gates, cooldown, duplicates, vector persistence, origin/controller/overlay boundaries, Twitch rate-limit backoff, ownership, stale candidates, account changes, persistent seven-second veto timing and cancellation, and actual `is_sent` response handling.
+- 34 passing engine/server tests cover title-derived fixture retrieval, unrelated chatter, ambiguity, manual safety gates, cooldown, duplicates, vector persistence, origin/controller/overlay boundaries, Twitch rate-limit backoff, ownership, stale candidates, account changes, persistent seven-second veto timing and cancellation, and actual `is_sent` response handling.
 - Fixture clips are used only in tests and never shipped as demo content. Owned-archive metadata checks require the confirmed owner. Production readiness fails if there are no actual clips.
 - Module syntax checks pass. The video Python tools compile.
 - Fresh isolated browser contexts passed at 390px and 1440px in both system themes. Every view has no horizontal overflow; no application or browser console error was observed in these cold checks. No Twitch account or visitor credentials were supplied.
@@ -22,3 +22,14 @@
 - Assemble the owner’s recordings, burn captions, review every frame and the full audio, create the final desktop file, upload publicly to YouTube, and complete Devpost.
 
 Do not mark the project fully submission-ready while these checks are open.
+
+## Automated capture preparation — 1 November 2026
+
+- Fresh Helix check still found no published sjathedude clips; the supplied desktop recordings folder is missing.
+- Eight original 1080p scene posters and a 400-second source video were rendered with Puppeteer and ffmpeg. They are source content, not proof of a completed broadcast.
+- Added tests cover empty HTTP 204 channel updates, one-time expiring helper pairing, optional permission checks, explicit clip titles bound to the authorized owner, and owner-only labeled rehearsal input.
+- RTMP broadcast, actual clip creation, optional consent, real chat rehearsal, and final footage remain pending the private stream key and broadcaster authorization.
+
+- The final local cold checks passed at both widths and themes; the broader browser suite passed. Actual Puppeteer screencasting passed at 1920 × 1080 using Chrome 156.
+- One-time pairing was exercised through real local Worker routes, including cookie matching and one-time replay rejection.
+- GitHub About metadata again reports MIT and the live URL. Cloudflare login expired and its renewal attempt timed out; the new automation endpoints have not been deployed.

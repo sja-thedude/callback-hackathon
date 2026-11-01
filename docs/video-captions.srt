@@ -19,7 +19,7 @@ Streamers can have years of clips, but nobody can search that history while prod
 Callbacks are some of the best moments on stream.
 
 6
-00:00:34,000 --> 00:00:37,085
+00:00:34,000 --> 00:00:37,064
 They depend on remembering the right thing at the right time.
 
 7
@@ -43,11 +43,11 @@ The activity graph shows messages actually received.
 The candidate feed explains the connection and shows competing matches.
 
 12
-00:01:07,000 --> 00:01:12,546
-Three independent chatters, a strong score, and a clear lead over the next match are required.
+00:01:07,000 --> 00:01:13,954
+Community mode needs three voices. This recording uses a labeled rehearsal with my own live messages.
 
 13
-00:01:16,000 --> 00:01:19,818
+00:01:16,000 --> 00:01:19,828
 Here, the engine holds a near miss instead of forcing a callback.
 
 14

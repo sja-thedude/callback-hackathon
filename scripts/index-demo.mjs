@@ -89,7 +89,7 @@ if (!all.length && !args.includes("--publish-empty"))
   );
 const selected = [...new Map(all.map((c) => [c.id, c])).values()]
   .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
-  .slice(0, 6);
+  .slice(0, 8);
 const ids = [...new Set(selected.map((c) => c.game_id).filter(Boolean))];
 const games = ids.length
   ? Object.fromEntries(
@@ -112,7 +112,13 @@ const library = {
     name: broadcaster.display_name,
     url: "https://www.twitch.tv/" + login,
   },
-  clips: selected.map((clip) => normalizeClip(clip, games, broadcaster)),
+  clips: selected.map((clip) => ({
+    ...normalizeClip(clip, games, broadcaster),
+    ...(/^[a-zA-Z0-9_-]+$/.test(clip.id) &&
+    fs.existsSync(`public/media/owned-${clip.id}.mp4`)
+      ? { mediaUrl: `/media/owned-${clip.id}.mp4` }
+      : {}),
+  })),
 };
 const scenarios = buildScenarios(library);
 const phrases = [

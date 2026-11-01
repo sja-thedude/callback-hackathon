@@ -1,6 +1,7 @@
 import { rank, decision, tokens } from "../public/engine.js";
 import { retrieveDemo } from "./demo.js";
 import { embeddingText, normalizeClip } from "./clip-index.js";
+import { automationAction, automationScopes } from "./automation.js";
 const json = (data, status = 200) =>
   Response.json(data, {
     status,
@@ -58,15 +59,17 @@ export default {
       if (url.pathname === "/api/demo/search")
         return retrieveDemo(request, env);
       const overlay = url.pathname === "/api/overlay";
+      const pairing = url.pathname === "/auth/automation";
       const sessionParts = (
         readCookie(request, "callback_session") || ""
       ).split(".");
       let controlKey = sessionParts[1];
-      let id = overlay
-        ? url.searchParams.get("room")
-        : /^[a-f0-9-]{36}$/.test(controlKey || "")
-          ? sessionParts[0]
-          : null;
+      let id =
+        overlay || pairing
+          ? url.searchParams.get("room")
+          : /^[a-f0-9-]{36}$/.test(controlKey || "")
+            ? sessionParts[0]
+            : null;
       let fresh = false;
       try {
         if (id) env.STUDIO.idFromString(id);
@@ -74,7 +77,7 @@ export default {
         id = null;
       }
       if (!id) {
-        if (overlay)
+        if (overlay || pairing)
           return json(
             {
               error:
@@ -91,7 +94,7 @@ export default {
       headers.set("X-Studio-ID", id);
       headers.set("X-Public-Origin", url.origin);
       headers.delete("X-Control-Key");
-      if (!overlay) headers.set("X-Control-Key", controlKey);
+      if (!overlay && !pairing) headers.set("X-Control-Key", controlKey);
       const response = await stub.fetch(new Request(request, { headers }));
       if (fresh && response.status !== 101) {
         const next = new Response(response.body, response);
@@ -128,6 +131,7 @@ export class Studio {
           cooldown: 180,
           autoFire: false,
           chatBot: false,
+          soloRehearsal: false,
           duration: 20,
         },
         history: [],
@@ -157,6 +161,7 @@ export class Studio {
       delete this.data.candidate;
       this.data.settings.autoFire = false;
       this.data.settings.chatBot = false;
+      this.data.settings.soloRehearsal = false;
       this.data.overlayKey = crypto.randomUUID();
       await this.saveClips();
       for (const socket of this.sockets)
@@ -204,17 +209,16 @@ export class Studio {
     }
     await this.cancelPending();
     const candidate = this.data.candidate;
-    const voices = new Set(
-      this.data.window
-        .filter((m) => Date.now() - m.at < 30000)
-        .map((m) => m.user),
-    );
+    const recent = this.data.window.filter((m) => Date.now() - m.at < 30000);
+    const voices = new Set(recent.map((m) => m.user));
     if (
       !this.data.settings.autoFire ||
       !candidate ||
       candidate.id !== pending.id ||
       Date.now() - candidate.matchedAt > 45000 ||
-      voices.size < 3
+      (this.data.settings.soloRehearsal
+        ? !recent.some((m) => m.userId === this.data.user?.id)
+        : voices.size < 3)
     ) {
       await this.save();
       return;
@@ -280,7 +284,7 @@ export class Studio {
         "Twitch could not complete that request. Reconnect your account and try again.";
       throw e;
     }
-    return response.json();
+    return response.status === 204 ? { data: [] } : response.json();
   }
   async token(force = false) {
     if (!this.data.auth) {
@@ -328,6 +332,7 @@ export class Studio {
         ? { ...this.data.candidate, vector: undefined }
         : null,
       botStatus: this.data.botStatus || null,
+      grantedScopes: this.data.auth?.scope || [],
       connections: {
         studio: [...this.socketRoles.values()].filter((r) => r === "studio")
           .length,
@@ -341,6 +346,35 @@ export class Studio {
       path = url.pathname,
       origin = request.headers.get("X-Public-Origin");
     try {
+      if (path === "/auth/automation") {
+        const pair = await this.state.storage.get("automation-pair");
+        if (
+          !pair ||
+          pair.code !== url.searchParams.get("code") ||
+          pair.expires < Date.now()
+        )
+          return json(
+            {
+              error:
+                "This one-time authorization link has expired. Start the local helper again.",
+            },
+            401,
+          );
+        await this.state.storage.delete("automation-pair");
+        return new Response(null, {
+          status: 302,
+          headers: {
+            Location: `${origin}/auth/twitch?automation=1`,
+            "Set-Cookie": cookie(
+              "callback_session",
+              `${request.headers.get("X-Studio-ID")}.${this.data.controlKey}`,
+              new URL(origin).protocol === "https:",
+            ),
+            "Cache-Control": "no-store",
+            "Referrer-Policy": "no-referrer",
+          },
+        });
+      }
       if (path === "/api/overlay") {
         if (url.searchParams.get("key") !== this.data.overlayKey)
           return json(
@@ -391,6 +425,19 @@ export class Studio {
           connected: !!this.data.user,
           indexedClips: this.data.clips.length,
         });
+      if (path.startsWith("/api/automation/") && request.method === "GET")
+        return [
+          "/api/automation/status",
+          "/api/automation/channel",
+          "/api/automation/clip",
+        ].includes(path)
+          ? await automationAction(this, path, {}, url)
+          : json(
+              {
+                error: "Use a studio POST request for that automation action.",
+              },
+              405,
+            );
       if (path === "/auth/twitch") {
         if (!this.env.TWITCH_CLIENT_ID || !this.env.TWITCH_CLIENT_SECRET)
           return Response.redirect(`${origin}/?notice=twitch-setup`, 302);
@@ -404,7 +451,13 @@ export class Studio {
           client_id: this.env.TWITCH_CLIENT_ID,
           redirect_uri: `${origin}/auth/callback`,
           response_type: "code",
-          scope: "user:read:chat user:write:chat",
+          scope: [
+            "user:read:chat",
+            "user:write:chat",
+            ...(url.searchParams.get("automation") === "1"
+              ? automationScopes
+              : []),
+          ].join(" "),
           state,
         });
         return Response.redirect(target.toString(), 302);
@@ -449,7 +502,17 @@ export class Studio {
       } catch {
         return json({ error: "Please send a valid studio request." }, 400);
       }
+      if (path.startsWith("/api/automation/"))
+        return await automationAction(this, path, body, url);
       if (path === "/api/settings") {
+        if (
+          typeof body.soloRehearsal === "boolean" &&
+          body.soloRehearsal !== !!this.data.settings.soloRehearsal
+        ) {
+          await this.cancelPending();
+          this.data.window = [];
+          delete this.data.candidate;
+        }
         for (const [k, min, max] of [
           ["threshold", 0.6, 0.95],
           ["cooldown", 60, 600],
@@ -457,7 +520,7 @@ export class Studio {
         ])
           if (typeof body[k] === "number" && Number.isFinite(body[k]))
             this.data.settings[k] = Math.min(max, Math.max(min, body[k]));
-        for (const k of ["autoFire", "chatBot"])
+        for (const k of ["autoFire", "chatBot", "soloRehearsal"])
           if (typeof body[k] === "boolean") this.data.settings[k] = body[k];
         if (!this.data.settings.autoFire) await this.cancelPending();
         await this.save();
@@ -567,8 +630,14 @@ export class Studio {
           .map((m) => ({
             text: m.text,
             user: String(m.user || "viewer").slice(0, 50),
+            userId: String(m.userId || "").slice(0, 30),
             at: Date.now(),
-          }));
+          }))
+          .filter(
+            (m) =>
+              !this.data.settings.soloRehearsal ||
+              m.userId === this.data.user.id,
+          );
         this.data.messages += batch.length;
         this.data.window = [
           ...this.data.window.filter((m) => Date.now() - m.at < 30000),
@@ -580,10 +649,17 @@ export class Studio {
         this.busy = true;
         try {
           const distinct = new Set(this.data.window.map((m) => m.user));
-          if (distinct.size < 3)
+          const solo = this.data.settings.soloRehearsal;
+          if (
+            (solo &&
+              !this.data.window.some((m) => m.userId === this.data.user.id)) ||
+            (!solo && distinct.size < 3)
+          )
             return json({
               held: true,
-              reason: "Waiting for three independent voices",
+              reason: solo
+                ? "Waiting for the broadcaster's real rehearsal message"
+                : "Waiting for three independent voices",
             });
           const query = this.data.window
             .map((m) => m.text)
@@ -599,6 +675,7 @@ export class Studio {
           if (!candidate) return json({ held: true });
           this.data.candidate = {
             ...candidate,
+            rehearsal: !!this.data.settings.soloRehearsal,
             runnerUp: ranked[1]?.score || 0,
             matchedAt: Date.now(),
           };
@@ -611,7 +688,7 @@ export class Studio {
           this.emit({
             type: "candidate",
             candidate: {
-              ...candidate,
+              ...this.data.candidate,
               vector: undefined,
               runnerUp: ranked[1]?.score || 0,
             },
@@ -619,7 +696,7 @@ export class Studio {
             verdict,
           });
           if (verdict.ok && this.data.settings.autoFire)
-            await this.queueCallback(candidate);
+            await this.queueCallback(this.data.candidate);
           else await this.cancelPending();
           await this.save();
           return json({

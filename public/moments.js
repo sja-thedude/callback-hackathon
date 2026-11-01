@@ -1,0 +1,58 @@
+export const moments = [
+  {
+    id: "rocket",
+    title: "Paper rocket beside a blue mug",
+    phrase: "remember the paper rocket and the blue mug",
+    scene: "A folded paper rocket sits beside a blue ceramic mug.",
+    color: "#486a89",
+  },
+  {
+    id: "saturn",
+    title: "Telescope under Saturn's rings",
+    phrase: "the telescope pointed at Saturn and its rings",
+    scene: "A brass telescope looks toward a ringed planet.",
+    color: "#61547f",
+  },
+  {
+    id: "bread",
+    title: "Sourdough loaf on a kitchen board",
+    phrase: "that sourdough loaf on the wooden kitchen board",
+    scene: "A scored loaf rests on a wooden board.",
+    color: "#94704a",
+  },
+  {
+    id: "train",
+    title: "Red train at a snowy bridge",
+    phrase: "the red train crossing the snowy bridge",
+    scene: "A red train stands above a snowy valley.",
+    color: "#83565b",
+  },
+  {
+    id: "robot",
+    title: "Wooden robot tending basil",
+    phrase: "our wooden robot was watering the basil plant",
+    scene: "A wooden robot stands beside a pot of basil.",
+    color: "#55725b",
+  },
+  {
+    id: "lighthouse",
+    title: "Lighthouse above a stormy sea",
+    phrase: "the lighthouse beam above the stormy sea",
+    scene: "A lighthouse watches over rolling ocean waves.",
+    color: "#436d75",
+  },
+  {
+    id: "painting",
+    title: "Paint brushes beside a yellow canvas",
+    phrase: "the paint brushes and that bright yellow canvas",
+    scene: "Brushes rest beside an original yellow abstract painting.",
+    color: "#9b854b",
+  },
+  {
+    id: "hourglass",
+    title: "Hourglass in a desert of dunes",
+    phrase: "the hourglass sitting among the desert sand dunes",
+    scene: "An hourglass measures time above desert dunes.",
+    color: "#94735f",
+  },
+];
