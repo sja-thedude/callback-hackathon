@@ -76,7 +76,7 @@ The account-free demo runs **BGE Small English v1.5** retrieval over an API-veri
 
 Replay text is generated from actual indexed clip titles, not presented as historical chat or a clip transcript. Demo cooldown is compressed to eight seconds; connected live cooldowns have a one-minute minimum. Live retrieval uses clip metadata rather than VOD transcripts; vague titles may not produce a strong match.
 
-Refresh the public demo snapshot with `npm run index:demo -- --channel sjathedude --owned-content` using Node 22+ and credentials in the ignored `.env` file. The script retrieves up to 500 clips through Helix, selects the newest six, verifies each broadcaster ID, resolves categories, and writes only public metadata to `public/demo-library.js`. It also creates title-based recording phrases in `docs/TRIGGER_PHRASES.md`. An empty channel stops the command without replacing the index; `--publish-empty` explicitly removes the old archive and publishes the honest waiting state. Live and public indexing share metadata normalization and embedding input formatting.
+Refresh the public demo snapshot with `npm run index:demo -- --channel sjathedude --owned-content` using Node 22+ and credentials in the ignored `.env` file. The script retrieves up to 500 clips through Helix, selects the newest eight, verifies each broadcaster ID, resolves categories, and writes only public metadata to `public/demo-library.js`. It also creates title-based recording phrases in `docs/TRIGGER_PHRASES.md`. An empty channel stops the command without replacing the index; `--publish-empty` explicitly removes the old archive and publishes the honest waiting state. Live and public indexing share metadata normalization and embedding input formatting.
 
 ## Stack and architecture
 
@@ -108,9 +108,13 @@ The demo is restricted to **[sjathedude](https://www.twitch.tv/sjathedude)**, th
 
 Twitch player policies, deleted clips, or browser autoplay rules can affect playback. Every indexed callback retains its original clip link. The app’s landscape is an original preview backdrop, not a clip thumbnail. The OBS source is transparent outside callbacks.
 
+## Automated broadcast and capture
+
+The [automation guide](docs/AUTOMATED_CAPTURE.md) covers original scene rendering, a real RTMP broadcast, eight explicitly titled Helix clips, owned media preparation, and Puppeteer product recordings. The owner must provide the private stream key, authorize the optional capture permissions, and supply actual build-thread footage. Ordinary sign-in keeps its chat-only permissions. Credentials are not exported into the video or public assets. The workflow has not yet run against a live broadcaster session.
+
 ## Live verification and video
 
-Follow the [step-by-step live walkthrough](docs/LIVE_WALKTHROUGH.md). Live chat uses authenticated EventSub WebSockets; there is no separate IRC connection. Keep the studio open while streaming. Three actual chatters are required by the current safety policy.
+Follow the [step-by-step live walkthrough](docs/LIVE_WALKTHROUGH.md). Live chat uses authenticated EventSub WebSockets; there is no separate IRC connection. Keep the studio open while streaming. Community mode requires three actual chatters. An explicitly labeled owner-rehearsal mode accepts only the broadcaster’s own messages for an automated live test; the other airing gates still apply.
 
 The [video script](docs/VIDEO_SCRIPT.md) follows a 2:45 shot list. Kokoro `af_heart` narration and 23 timed caption cues have been generated locally. The earlier third-party-clip recordings were removed from the current submission assets. The final export and public YouTube link remain pending the owner’s recordings. Video tooling is described in [the production guide](docs/VIDEO_PRODUCTION.md).
 

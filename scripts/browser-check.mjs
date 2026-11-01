@@ -57,7 +57,7 @@ try {
     await page.locator('[data-view="overlay"]').click();
     await page.locator("#test-overlay").click();
     await overlay.locator("#callback-card.airing").waitFor({ timeout: 10000 });
-    assert.equal(await overlay.locator("iframe").count(), 1);
+    assert.equal(await overlay.locator("iframe, video").count(), 1);
     assert.equal(
       await overlay
         .locator("body")
@@ -251,6 +251,11 @@ try {
   assert.deepEqual(errors, []);
   console.log("PASS no application JavaScript errors");
 } finally {
-  await page.request.post(url + "/api/rotate-overlay", { headers: { Origin: new URL(url).origin }, data: {} }).catch(() => {});
+  await page.request
+    .post(url + "/api/rotate-overlay", {
+      headers: { Origin: new URL(url).origin },
+      data: {},
+    })
+    .catch(() => {});
   await browser.close();
 }

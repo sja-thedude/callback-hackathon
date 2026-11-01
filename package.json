@@ -15,10 +15,16 @@
     "index:demo": "node scripts/index-demo.mjs",
     "test:production": "node scripts/production-check.mjs",
     "test:cold": "node scripts/cold-check.mjs",
-    "check:secrets": "node scripts/check-secrets.mjs"
+    "check:secrets": "node scripts/check-secrets.mjs",
+    "automation:connect": "node scripts/connect-automation.mjs",
+    "automation:render": "node scripts/render-broadcast.mjs",
+    "automation:broadcast": "node scripts/broadcast-and-clip.mjs",
+    "automation:media": "node scripts/download-owned-media.mjs",
+    "automation:record": "node scripts/record-live.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
+    "puppeteer-core": "^25.16.0",
     "wrangler": "^4.156.0"
   }
 }

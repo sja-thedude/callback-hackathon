@@ -373,3 +373,132 @@ test("bot success requires Twitch is_sent and failed delivery preserves the over
     );
   }
 });
+
+test("Helix accepts successful empty channel-update responses", async () => {
+  const { room } = await studio({ TWITCH_CLIENT_ID: "test-id" });
+  room.data.auth = { access_token: "test", expiresAt: Date.now() + 3600000 };
+  const original = globalThis.fetch;
+  globalThis.fetch = async () => new Response(null, { status: 204 });
+  try {
+    assert.deepEqual(await room.helix("channels", { method: "PATCH" }), {
+      data: [],
+    });
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+test("automation pairing is one-time and expires without exposing OAuth tokens", async () => {
+  const { room, state } = await studio();
+  await room.fetch(req("/api/session"));
+  const created = await (
+    await room.fetch(req("/api/automation/pair", {}))
+  ).json();
+  const r = await room.fetch(req("/auth/automation?code=" + created.code));
+  assert.equal(r.status, 302);
+  assert.match(r.headers.get("Location"), /automation=1/);
+  assert.match(r.headers.get("Set-Cookie"), /HttpOnly/);
+  assert.equal(
+    (await room.fetch(req("/auth/automation?code=" + created.code))).status,
+    401,
+  );
+  await state.storage.put("automation-pair", {
+    code: "expired",
+    expires: Date.now() - 1,
+  });
+  assert.equal(
+    (await room.fetch(req("/auth/automation?code=expired"))).status,
+    401,
+  );
+});
+test("broadcast permissions are optional and actual missing scopes are reported", async () => {
+  const { room } = await studio({
+    TWITCH_CLIENT_ID: "test-id",
+    TWITCH_CLIENT_SECRET: "test-secret",
+  });
+  const normal = await room.fetch(req("/auth/twitch"));
+  const automated = await room.fetch(req("/auth/twitch?automation=1"));
+  assert.ok(
+    !new URL(normal.headers.get("Location")).searchParams
+      .get("scope")
+      .includes("clips:edit"),
+  );
+  assert.ok(
+    new URL(automated.headers.get("Location")).searchParams
+      .get("scope")
+      .includes("clips:edit"),
+  );
+  room.data.user = { id: "owner", name: "Owner" };
+  room.data.auth = { scope: ["user:read:chat", "user:write:chat"] };
+  const status = await (await room.fetch(req("/api/automation/status"))).json();
+  assert.equal(status.ready, false);
+  assert.ok(status.missingScopes.includes("channel:manage:broadcast"));
+  assert.equal(
+    (await room.fetch(req("/api/automation/create-clip", { moment: "rocket" })))
+      .status,
+    403,
+  );
+});
+test("automated clips use explicit API titles and cannot target another broadcaster", async () => {
+  const { room } = await studio();
+  room.data.user = { id: "owner", name: "Owner" };
+  room.data.auth = {
+    scope: ["clips:edit", "channel:manage:broadcast", "channel:manage:clips"],
+  };
+  let captured;
+  room.helix = async (path) => {
+    captured = path;
+    return { data: [{ id: "created" }] };
+  };
+  assert.equal(
+    (
+      await room.fetch(
+        req("/api/automation/create-clip", {
+          moment: "rocket",
+          broadcasterId: "foreign",
+        }),
+      )
+    ).status,
+    200,
+  );
+  const params = new URLSearchParams(captured.split("?")[1]);
+  assert.equal(params.get("broadcaster_id"), "owner");
+  assert.equal(params.get("title"), "Paper rocket beside a blue mug");
+  assert.equal(params.get("duration"), "20");
+  assert.equal(
+    (await room.fetch(req("/api/automation/create-clip", { moment: "rocket" })))
+      .status,
+    429,
+  );
+});
+test("solo rehearsal accepts only owner messages and marks the resulting candidate", async () => {
+  for (const own of [true, false]) {
+    const { room } = await studio({
+      AI: { run: async () => ({ data: [[1, 0]] }) },
+    });
+    room.data.user = { id: "owner", name: "Owner" };
+    room.data.settings.soloRehearsal = true;
+    room.data.clips = [
+      {
+        id: "owned",
+        broadcasterId: "owner",
+        title: "Paper rocket beside a blue mug",
+        category: "Original",
+        vector: [1, 0],
+      },
+    ];
+    const r = await room.fetch(
+      req("/api/ingest", {
+        messages: [
+          {
+            user: own ? "Owner" : "Other",
+            userId: own ? "owner" : "other",
+            text: "remember the paper rocket beside the blue ceramic mug",
+          },
+        ],
+      }),
+    );
+    const body = await r.json();
+    assert.equal(!!body.verdict?.ok, own);
+    assert.equal(!!room.data.candidate?.rehearsal, own);
+  }
+});

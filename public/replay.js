@@ -1,5 +1,5 @@
 export function buildScenarios(library) {
-  return library.clips.slice(0, 6).map((clip, index) => ({
+  return library.clips.slice(0, 8).map((clip, index) => ({
     label: clip.title,
     description: `A scripted conversation recalls ${clip.broadcaster}’s own clip.`,
     clip: index,

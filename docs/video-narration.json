@@ -37,7 +37,7 @@
         "Embeddings let the engine compare a rolling chat window with those memories.",
         "The activity graph shows messages actually received.",
         "The candidate feed explains the connection and shows competing matches.",
-        "Three independent chatters, a strong score, and a clear lead over the next match are required.",
+        "Community mode needs three voices. This recording uses a labeled rehearsal with my own live messages.",
         "Here, the engine holds a near miss instead of forcing a callback.",
         "A qualifying automatic callback gives me seven seconds to veto it.",
         "Cooldown and duplicate checks protect the timing. When it airs, the bot posts the original clip link."
