@@ -1,0 +1,30 @@
+{
+  "source": "authenticated owner studio",
+  "sourceKind": "browser_source",
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "obsVersion": "33.0.1",
+  "on-air": {
+    "capturedAt": "2026-11-01T21:31:40.069Z",
+    "file": "screenshots/obs-live-on-air.png"
+  },
+  "exit": {
+    "capturedAt": "2026-11-01T21:31:59.460Z",
+    "file": "screenshots/obs-live-exit.png"
+  },
+  "idleAlpha": [
+    0,
+    0
+  ],
+  "on-airAlpha": [
+    0,
+    255
+  ],
+  "exitAlpha": [
+    0,
+    0
+  ],
+  "verifiedLiveCallback": true
+}

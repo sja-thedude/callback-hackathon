@@ -1,6 +1,6 @@
 # Video production
 
-The final edit is **165 seconds**, 1920 × 1080, 30fps, H.264/AAC, with Kokoro `af_heart` narration and burned captions. There is no music and source-recording audio is excluded. The finished file belongs at `~/Desktop/callback-demo.mp4` after the owner supplies real recordings and the frames have been reviewed.
+The completed final edit is **165 seconds**, 1920 × 1080, 30fps, H.264/AAC, with Kokoro `af_heart` narration and burned captions. There is no music and source-recording audio is excluded. The finished file belongs at `~/Desktop/callback-demo.mp4` after final export and frame review.
 
 ## Current assets
 
@@ -10,7 +10,7 @@ The final edit is **165 seconds**, 1920 × 1080, 30fps, H.264/AAC, with Kokoro `
 - [Timed caption file](video-captions.srt). Local caption assets: `/tmp/callback-video/captions.srt` and `captions.json`, with transparent PNG caption images.
 - The earlier third-party-clip walkthrough is excluded from the current submission assets. It is not the final video.
 
-The audio runs exactly 165 seconds including intentional pauses. It contains planned claims that must be supported by the real recordings before publication. The final video and its public YouTube URL do not exist yet.
+The audio runs exactly 165 seconds including intentional pauses. It contains planned claims that must be supported by the real recordings before publication. Real owned-channel product takes and an explicitly labeled authentic session-export presentation are captured. The exported file is `~/Desktop/callback-demo.mp4`, mirrored as `docs/callback-demo.mp4`. Public YouTube upload remains a separate submission step.
 
 ## Reproduce narration
 
@@ -24,7 +24,7 @@ Each sentence is synthesized separately at natural speed. Its measured audio len
 
 ## Edit manifest
 
-Once the recordings are available, review the raw takes and create a local JSON edit manifest outside the repository. It has five keys: `opening`, `problem`, `studio`, `build`, and `closing`. Each value is an ordered array of takes with `file`, `in` (source seconds), `duration`, optional `crop` as `[x, y, width, height]`, and optional `masks` as rectangles in the final 1920 × 1080 canvas.
+Review the raw takes and create a local JSON edit manifest outside the repository. It has five keys: `opening`, `problem`, `studio`, `build`, and `closing`. Each value is an ordered array of takes with `file`, `in` (source seconds), `duration`, optional `crop` as `[x, y, width, height]`, and optional `masks` as rectangles in the final 1920 × 1080 canvas.
 
 The takes must total 20, 20, 60, 40, and 25 seconds respectively. A segment may use multiple takes. Crop application chrome, account details, private links, and unrelated branding. Use opaque masks only for consistently identifiable branding or private regions; do not cover a failed verdict or create misleading evidence.
 
@@ -45,3 +45,5 @@ The review tool decodes **every frame**, compares its count with ffprobe, and wr
 Frame extraction does not automatically recognize every trademark. The tool deliberately reports visual review as pending until someone completes that inspection. No “branding-free” result is claimed merely because ffmpeg succeeded.
 
 After corrections, rerender and regenerate the frame review. Publish to YouTube with public visibility, verify signed-out playback, and place that actual URL directly below the README live URL and in Devpost.
+
+Final evidence: [VIDEO_PIPELINE_VERIFICATION.json](VIDEO_PIPELINE_VERIFICATION.json). All 4,950 frames were decoded and text-scanned. Edit boundaries, product states, original media and flagged text states were inspected. No third-party graphical branding was observed; descriptive integration and build references remain. Recognition limits are recorded explicitly.

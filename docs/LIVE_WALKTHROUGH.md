@@ -1,6 +1,6 @@
 # Owned-channel live verification
 
-Channel confirmed by the owner: **sjathedude**. Clip publication is pending. Exact clip-specific phrases will be written to `docs/TRIGGER_PHRASES.md` after the real index is available; no invented clip is a verified trigger.
+Channel confirmed by the owner: **sjathedude**. Eight owned clips are indexed. Exact clip-specific phrases are in [TRIGGER_PHRASES.md](TRIGGER_PHRASES.md), with verified neural matches in `RETRIEVAL_VERIFICATION.json`.
 
 ## 1. Sign in
 
@@ -38,6 +38,8 @@ Enable automatic callbacks in settings. Use a fresh, distinctly titled clip and 
 
 Keep the configured cooldown between callbacks (default three minutes, minimum one minute). Aired or vetoed clips do not repeat in the same studio session. For the near-miss take, let the prior 30-second window clear, then use unrelated chat and show the engine's actual held verdict. If any step fails, preserve the visible plain-language error and tell me the step; keep credentials private.
 
-## Current verification boundary
+## Verified production path
 
-Real app authorization, authenticated Helix access, neural public replay, browser checks, and native OBS transparency have been tested previously. The new veto queue and bot-response handling have automated coverage. Own-channel clip indexing, real EventSub message receipt, live retrieval, and chat delivery are not yet claimed as verified because the owned clips and live take do not exist yet.
+The real **sjathedude** channel completed sign-in, eight-clip neural indexing, EventSub chat receipt, a held near miss, an actual veto, two separate callbacks, Twitch-confirmed bot links received back through EventSub, and native OBS live playback with transparent idle/exit. The live takes use the clearly labeled owner-rehearsal setting. See `LIVE_VERIFICATION.json`, `CHAT_VERIFICATION.json`, and `OBS_LIVE_VERIFICATION.json`.
+
+For a solo reshoot, enable Owner rehearsal and use an unused clip’s exact owner line in `TRIGGER_PHRASES.md`. Normal community mode still needs three real chatters. Already aired/vetoed clips remain protected, and the minimum live cooldown remains one minute.

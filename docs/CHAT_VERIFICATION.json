@@ -1,0 +1,9 @@
+{
+  "verifiedAt": "2026-11-01T20:28:48.079Z",
+  "channel": "sjathedude",
+  "transport": "real EventSub WebSocket",
+  "authenticatedSubscription": true,
+  "sendConfirmedByTwitch": true,
+  "ownerMessageReceived": true,
+  "callbackRetrieval": "Verified in subsequent owned-clip live takes; see LIVE_VERIFICATION.json"
+}

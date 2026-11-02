@@ -22,7 +22,7 @@ A streamer connects their channel and explicitly indexes their own clips. Callba
 
 The control panel shows real indexing progress, received-message activity, candidate reasoning, competing matches, and the decision to air or hold. Automatic callbacks have a seven-second veto window; streamers can also review and approve eligible candidates manually. Confidence, ambiguity, independent voices, cooldown, duplicate status, freshness, and ownership checks protect airtime. The session trail preserves the evidence behind aired memories.
 
-An account-free replay lets judges try the interaction without waiting for a streamer to be live. Replay text is generated from indexed clip titles and labeled as scripted chat. The demo is restricted to my own Twitch channel, **sjathedude**. There is no third-party channel archive or fictional clip library. All submission clip footage must be from my own original channel content.
+An account-free replay lets judges try the interaction without waiting for a streamer to be live. Replay text is generated from indexed clip titles and labeled as scripted chat. The demo is restricted to my own Twitch channel, **sjathedude**. There is no third-party channel archive or fictional clip library. All submission clip footage is my own original rendered content broadcast and clipped on that channel.
 
 ## Architecture
 
@@ -40,24 +40,26 @@ I described the shared-memory experience and production constraints in this thre
 
 Within the same thread, Codex implemented confidence and ambiguity gates, cooldown and duplicate checks, account-switch isolation, the persistent veto queue, and confirmed chat-delivery handling. It added tests for weak matches, foreign clips, stale candidates, veto cancellation, and Twitch backoff. It exercised the deployed/local app through isolated browser checks at desktop and phone sizes, checked both themes, configured the actual OBS browser source, and measured its transparency. Codex also prepared deployment configuration, the owned-content indexing script, and the timed narration/caption tooling.
 
-The video must show the actual thread and concrete implementation/test evidence alongside this explanation. The session ID above identifies the thread containing the build.
+The video presents explicitly labeled evidence extracted from the actual session: my original brief, a recorded coding action, fresh passing tests, and real live verification. It is a readable export presentation rather than a native chat-application recording. The session ID above identifies the thread containing the build.
 
 ## Why it matters
 
 The idea turns archive retrieval into a live production element. A shared joke can become a visible moment everyone experiences together, while the streamer keeps producing the show. The engine’s restraint is part of the product: an uncertain connection is held rather than forced. Community engagement and retention gains have not been measured.
 
-## Current verification and release gates
+## Verified behavior and limits
 
-The app authorization and authenticated Helix access have succeeded. The owner confirmed the channel **sjathedude**. At the last index check it had no published clips. The current public dataset is therefore empty and explicitly awaiting the owner’s content; this is not a completed account-free replay test.
+Eight original clips were created on **sjathedude** through real Twitch broadcasts and Helix. Each clip’s ownership, title, original thumbnail, date, duration, and provenance were checked. All eight scripted replay windows select the intended clip above the 0.72 threshold and 0.08 ambiguity margin. The deployed replay works without a visitor account or credentials.
 
-There are 34 passing engine/server tests, syntax checks, and successful cold browser checks at 390px and 1440px in both themes. The updated idle source was tested in actual OBS Studio 33.0.1 at 1920 × 1080 and has a fully transparent alpha channel. Previous development testing verified animated on-air playback, but the owned-channel on-air take still needs recording. No previous third-party footage is included as final submission material.
+The real channel verification covered sign-in, neural indexing, EventSub receipt, a held near miss, veto cancellation, two distinct live callbacks, and confirmed original-link bot messages received back through EventSub. The takes used a clearly labeled owner-rehearsal mode, not simulated community participation. A live product-frame broadcast was confirmed by Twitch. Native OBS Studio 33.0.1 displayed the live Robot callback; alpha checks verified transparent idle and exit. Evidence is in `LIVE_VERIFICATION.json`, `OBS_LIVE_VERIFICATION.json`, and `RETRIEVAL_VERIFICATION.json`.
 
-Owned-channel clip indexing, real EventSub receipt, live retrieval, chat delivery, the replay against the owned archive, and on-air playback of those clips remain pending publication and a real live test. Raid/subscription/category triggers and VOD transcription are not implemented. Similarity scores are retrieval signals, not calibrated probabilities.
+There are 34 passing engine/server tests. Fresh cold checks at 390px and 1440px in both themes observed no console errors or horizontal overflow. The broader browser suite passed account-free replay, private overlay delivery, controls, and mocked session restoration.
+
+Raid/subscription/category triggers and VOD transcription are not implemented. Retrieval uses clip metadata; vague titles can limit recall. Similarity scores are retrieval signals, not calibrated probabilities. Community mode’s three-person requirement was tested in automated checks; the genuine live takes demonstrate the separately labeled owner mode.
 
 ## Video and final submission
 
-The shot list is in [VIDEO_SCRIPT.md](VIDEO_SCRIPT.md), with a 2:45 target. Kokoro `af_heart` narration, timed captions, ffmpeg assembly tooling, and exhaustive frame-extraction tooling are prepared. The final edit will use the owner’s recordings and no music or visible third-party branding. The export and public YouTube URL remain pending those recordings; no completed upload is claimed.
+The edit follows [VIDEO_SCRIPT.md](VIDEO_SCRIPT.md): real live callback opening, indexed library, real chat and veto evidence, authentic exported build-session evidence, and a second live callback. Kokoro `af_heart` provides narration, with burned-in captions and no music. All clip imagery is original owned-channel content. The completed edit is [2:45 at 1080p](callback-demo.mp4), with 30fps H.264 video and AAC narration.
 
-Before submission: publish and index the owned clips, verify the real live path, regenerate and verify the account-free replay, capture the actual build-thread footage, assemble and inspect the video, upload it publicly to YouTube, and enter its actual URL plus the repository, demo, description, and session ID in Devpost. Confirm personal eligibility and the submission terms. Keep free demo and repository access available through the end of judging.
+Public YouTube upload and the final Devpost form remain external submission steps. Enter the actual video URL with the repository, live demo, description, and session ID above. Keep the demo and repository available through judging. No completed YouTube upload or Devpost submission is claimed.
 
 Target submission: **2 November 2026, 10:00pm Jeddah**. Hard cutoff: **3 November 2026, 01:00 GMT+3**.

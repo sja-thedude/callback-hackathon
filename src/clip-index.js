@@ -6,7 +6,7 @@ export function normalizeClip(clip, games, owner) {
   return {
     id: clip.id,
     title: clip.title,
-    category: games[clip.game_id] || "Just Chatting",
+    category: games[clip.game_id] || "Uncategorized",
     gameId: clip.game_id,
     date: clip.created_at,
     views: clip.view_count,

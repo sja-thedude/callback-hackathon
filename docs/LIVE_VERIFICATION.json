@@ -1,0 +1,33 @@
+{
+  "verifiedAt": "2026-11-01T21:38:34.971Z",
+  "channel": "sjathedude",
+  "mode": "labeled owner rehearsal",
+  "transport": "real EventSub",
+  "capture": "separate verified takes",
+  "openingClip": {
+    "id": "KitschyHonorablePangolinMikeHogu-GGn3PRaUFaBFh3UA",
+    "title": "Wooden robot tending basil",
+    "score": 0.8708845615474986
+  },
+  "closingClip": {
+    "id": "AnnoyingFaintKathyBCouch-CJ3q9yfIzhpLCMQT",
+    "title": "Red train at a snowy bridge",
+    "score": 0.797611475017499
+  },
+  "checks": {
+    "liveIndex": true,
+    "nearMissHeld": true,
+    "liveVeto": true,
+    "realOwnerChat": true,
+    "liveRetrieval": true,
+    "confirmedBotPosting": true,
+    "callbackLinkReceivedByEventSub": true,
+    "publicLiveBroadcast": true,
+    "nativeOBS": true,
+    "privateOverlayDelivery": true,
+    "secondOwnedCallback": true
+  },
+  "broadcast": {
+    "frames": 1025
+  }
+}

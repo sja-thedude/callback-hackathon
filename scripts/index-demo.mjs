@@ -2,6 +2,7 @@ import fs from "node:fs";
 import { parseEnv } from "node:util";
 import { normalizeClip } from "../src/clip-index.js";
 import { buildScenarios } from "../public/replay.js";
+import { writeTriggerPhrases } from "./write-trigger-phrases.mjs";
 
 const args = process.argv.slice(2);
 const login = args[args.indexOf("--channel") + 1]?.toLowerCase();
@@ -121,41 +122,11 @@ const library = {
   })),
 };
 const scenarios = buildScenarios(library);
-const phrases = [
-  "# Live trigger phrases",
-  "",
-  `Channel **${library.broadcaster.name}** verified through Twitch Helix on ${library.indexedAt}. ${library.clips.length} published clips indexed.`,
-  "",
-  ...(!library.clips.length
-    ? [
-        "**No owned clips have been published yet. Exact trigger phrases are pending the real index.**",
-        "",
-      ]
-    : []),
-  "Use three real chatters in the channel within 30 seconds. Each person sends their assigned line once, a few seconds apart. Keep the studio listening and wait up to 15 seconds for a candidate. These are metadata-based trigger suggestions; the deployed neural check must confirm them before filming. Do not use multiple browser tabs of the same account as independent voices.",
-  "",
-  ...library.clips.flatMap((clip, i) => [
-    `## ${i + 1}. ${clip.title}`,
-    "",
-    `[Original clip](${clip.url})`,
-    "",
-    `- Chatter 1: ${clip.title}`,
-    `- Chatter 2: I remember ${clip.title}`,
-    `- Chatter 3: Bring back the ${clip.title} clip`,
-    "",
-  ]),
-  "## Near-miss take",
-  "",
-  "After at least 35 seconds of unrelated conversation, have the three chatters discuss an unrelated topic, such as planning a train journey. Check that the candidate is held below threshold or for ambiguity; do not claim a held match unless the real verdict shows it. A separate safe test is to raise sensitivity to 95% and observe the actual verdict, clearly showing the setting.",
-  "",
-  "Automatic callbacks have a seven-second veto window. A vetoed or aired clip cannot air again in that studio session. Use a different indexed clip for the next take and respect the cooldown; do not weaken the gates to force a recording.",
-  "",
-].join("\n");
 fs.writeFileSync(
   "public/demo-library.js",
   "export const demoLibrary = " + JSON.stringify(library, null, 2) + ";\n",
 );
-fs.writeFileSync("docs/TRIGGER_PHRASES.md", phrases);
+writeTriggerPhrases(library);
 console.log(
   `Indexed ${library.clips.length} owned-channel ${library.broadcaster.name} clips and prepared ${scenarios.length} replay scenarios. No credentials or tokens were written.`,
 );

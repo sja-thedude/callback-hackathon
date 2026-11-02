@@ -2,17 +2,19 @@
 
 [Live demo — callback-hackathon.sja-affu765.workers.dev](https://callback-hackathon.sja-affu765.workers.dev)
 
-The final submission video is awaiting the owner’s screen recordings and public YouTube URL. [Video script and shot list](docs/VIDEO_SCRIPT.md).
+[Demo video — 2:45, 1080p](docs/callback-demo.mp4)
+
+The edit is complete. Public YouTube upload remains a submission step. [Video script and shot list](docs/VIDEO_SCRIPT.md).
 
 **Your stream has a memory.** Callback connects a live conversation to a streamer's past, then brings the original clip back as a live production element. It turns “remember when” into something everyone can watch together.
 
-The demo channel is **sjathedude**, the project owner’s own channel. Its first clips are being recorded. The app currently shows that status explicitly; it includes no borrowed archive, invented clips, or substitute thumbnails. Once the real index is populated, visitors can replay it without an account or credentials.
+The demo channel is **sjathedude**, the project owner’s own channel. Eight original clips were broadcast, created through Helix, indexed, and verified. Visitors can replay correct callbacks without an account or credentials. The scripted chat matches real clip metadata; it is not historical chat.
 
 ![Callback studio](docs/screenshots/studio-light-1440.png)
 
 ## What works
 
-- A metadata-driven owned-channel replay pipeline: verified broadcaster ownership, original thumbnails and dates, title-derived chat scenarios, pause, rewind, speed controls, and match evidence. End-to-end replay is pending the owner’s first published clips.
+- A metadata-driven owned-channel replay pipeline: verified broadcaster ownership, original thumbnails and dates, title-derived chat scenarios, pause, rewind, speed controls, and match evidence. All eight neural scenarios and account-free overlay delivery have passed.
 - Dedicated transparent OBS page, invisible even during startup, with an animated entrance, original clip player, date, connection, progress bar, and exit.
 - Server-synchronized overlays, including overlays opened on another device. Private overlay links can be rotated.
 - Searchable clip library with category filters, original clip playback, and overlay previews.
@@ -27,7 +29,7 @@ The demo channel is **sjathedude**, the project owner’s own channel. Its first
 - Authenticated EventSub chat, rolling context, three distinct voices, confidence and ambiguity gates, duplicate suppression, and server-enforced cooldowns.
 - Optional chat link posting after a live callback, with explicit confirmation only when Twitch reports `is_sent`. Twitch 429 responses stop further requests until the reset window.
 
-**Production Twitch app configured:** the app credentials are stored as Cloudflare secrets. Twitch accepted the credentials, an authenticated Helix metadata request succeeded, and the production authorization route uses the expected callback. The owner confirmed successful broadcaster authorization. Own-channel indexing, EventSub, and chat posting still need end-to-end verification with a saved channel clip and live chat. Channel-event triggers such as raids and subscriptions are not included.
+**Production Twitch app configured:** the app credentials are stored as Cloudflare secrets. Twitch accepted the credentials, an authenticated Helix metadata request succeeded, and the production authorization route uses the expected callback. The owner confirmed successful broadcaster authorization. Own-channel indexing, real EventSub receipt, semantic retrieval, veto cancellation, confirmed chat posting, and native OBS playback were verified against the owner’s channel. The recorded live takes use explicitly labeled owner rehearsal. Channel-event triggers such as raids and subscriptions are not included.
 
 ## Run from a clean clone
 
@@ -40,7 +42,7 @@ npm ci
 npm run dev
 ```
 
-Open **http://localhost:8787**. Wrangler may request Cloudflare authentication for the remote embedding binding. The replay attempts server-side neural retrieval and uses an explicitly labeled local fallback if that service is unavailable. No clip replay is synthesized while the owner archive is empty.
+Open **http://localhost:8787**. Wrangler may request Cloudflare authentication for the remote embedding binding. The replay attempts server-side neural retrieval and uses an explicitly labeled local fallback if that service is unavailable. The deployed replay contains the eight real owned clips.
 
 ```sh
 npm test
@@ -84,7 +86,7 @@ Refresh the public demo snapshot with `npm run index:demo -- --channel sjathedud
 - Cloudflare Worker for OAuth, Helix access, security boundaries, and static assets.
 - One Durable Object per private studio for settings, tokens, vectors, callback history, and WebSocket fan-out.
 - Cloudflare's BGE embedding binding for connected live channels.
-- Twitch Helix, EventSub WebSockets, and the original-host clip embed.
+- Twitch Helix, EventSub WebSockets, original-host clip embeds, and authorized audio-free MP4 copies of the eight owned demo clips.
 - DM Sans and Instrument Serif, with system fallbacks. All illustrated app artwork is original SVG.
 
 The browser owns the authenticated EventSub socket; its opaque session ID is sent to the server to create a subscription. Received text is batched back to the private studio, where retrieval and airing rules run. The OBS source receives callback events through a read-only, key-protected WebSocket. Closing the studio stops live chat ingestion; the overlay alone does not ingest chat.
@@ -104,21 +106,21 @@ Static response headers restrict script, frame, and asset origins. Mutating requ
 
 ## Demo content and playback
 
-The demo is restricted to **[sjathedude](https://www.twitch.tv/sjathedude)**, the project owner’s channel, verified through Helix as broadcaster `1599601409`. The owner is creating original streams and clips for both the public replay and submission video. No third-party channel archive is included. Empty channel data is not replaced with fictional media. Original thumbnails, dates, categories, and durations will come from the real index.
+The demo is restricted to **[sjathedude](https://www.twitch.tv/sjathedude)**, the project owner’s channel, verified through Helix as broadcaster `1599601409`. The eight original scene clips were broadcast to the owner’s channel and created through Helix for the public replay and submission video. No third-party channel archive is included. Empty channel data is not replaced with fictional media. Original thumbnails, dates, categories, and durations come from the real index. Categories absent from Helix are labeled Uncategorized.
 
 Twitch player policies, deleted clips, or browser autoplay rules can affect playback. Every indexed callback retains its original clip link. The app’s landscape is an original preview backdrop, not a clip thumbnail. The OBS source is transparent outside callbacks.
 
 ## Automated broadcast and capture
 
-The [automation guide](docs/AUTOMATED_CAPTURE.md) covers original scene rendering, a real RTMP broadcast, eight explicitly titled Helix clips, owned media preparation, and Puppeteer product recordings. The owner must provide the private stream key, authorize the optional capture permissions, and supply actual build-thread footage. Ordinary sign-in keeps its chat-only permissions. Credentials are not exported into the video or public assets. The workflow has not yet run against a live broadcaster session.
+The [automation guide](docs/AUTOMATED_CAPTURE.md) covers original scene rendering, a real RTMP broadcast, eight explicitly titled Helix clips, owned media preparation, and Puppeteer product recordings. The owner provided the private stream key and authorized optional capture permissions. The build segment presents selected original session-export evidence with explicit provenance. Ordinary sign-in keeps its chat-only permissions. Credentials are not exported into the video or public assets. The workflow completed against the live broadcaster, including eight clips and two genuine chat-triggered callbacks.
 
 ## Live verification and video
 
 Follow the [step-by-step live walkthrough](docs/LIVE_WALKTHROUGH.md). Live chat uses authenticated EventSub WebSockets; there is no separate IRC connection. Keep the studio open while streaming. Community mode requires three actual chatters. An explicitly labeled owner-rehearsal mode accepts only the broadcaster’s own messages for an automated live test; the other airing gates still apply.
 
-The [video script](docs/VIDEO_SCRIPT.md) follows a 2:45 shot list. Kokoro `af_heart` narration and 23 timed caption cues have been generated locally. The earlier third-party-clip recordings were removed from the current submission assets. The final export and public YouTube link remain pending the owner’s recordings. Video tooling is described in [the production guide](docs/VIDEO_PRODUCTION.md).
+The [video script](docs/VIDEO_SCRIPT.md) follows a 2:45 shot list. Kokoro `af_heart` narration and 23 timed caption cues have been generated locally. The earlier third-party-clip recordings were removed from the current submission assets. The product takes and authentic exported build evidence are recorded. Public YouTube upload remains an external submission step. Video tooling is described in [the production guide](docs/VIDEO_PRODUCTION.md).
 
-The [submission copy](docs/SUBMISSION.md), [requirements checklist](docs/HACKATHON_REQUIREMENTS.md), and [verification record](docs/VERIFICATION.md) distinguish implemented behavior from pending real-channel checks.
+The [submission copy](docs/SUBMISSION.md), [requirements checklist](docs/HACKATHON_REQUIREMENTS.md), and [verification record](docs/VERIFICATION.md) record verified behavior and the remaining publication steps.
 
 ## Screenshots
 
@@ -132,7 +134,7 @@ The [submission copy](docs/SUBMISSION.md), [requirements checklist](docs/HACKATH
 
 `npm run check:secrets` checks the exact configured local Twitch values against branch/remote/tag history, tracked files, and the index without printing their values. Gitleaks supplements this with generic secret detection. Ignored environment files are never committed.
 
-Actual OBS Studio 33.0.1 has been tested with a 1920 × 1080 browser source. The updated idle source was captured in real OBS and every alpha value was zero. On-air testing with the owner’s new clips remains pending; see [the OBS verification record](docs/OBS_VERIFICATION.md).
+Actual OBS Studio 33.0.1 has been tested with a 1920 × 1080 browser source. The updated idle source was captured in real OBS and every alpha value was zero. A real owner-rehearsal callback was visible with alpha extrema [0, 255], and its exit returned to [0, 0]; see [the OBS verification record](docs/OBS_VERIFICATION.md).
 
 ## Project workflow
 
