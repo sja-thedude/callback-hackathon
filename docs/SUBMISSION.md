@@ -1,65 +1,149 @@
-# Callback — submission copy
+# Callback
 
-Live demo: https://callback-hackathon.sja-affu765.workers.dev
+Built with **OpenAI Codex** for streamers and their communities.
 
-Repository: https://github.com/sja-thedude/callback-hackathon
-
-Codex session ID: 01a18e51-660f-7513-a84d-3ce53f8c7732
-
-Submission editor: https://devpost.com/submit-to/31742-codex-x-twitchcon-hackathon/manage/submissions/1273659-callback/edit
-
-## One-line pitch
-
-Your stream has a memory. Callback brings an old clip back when the live conversation makes it relevant again.
+[Live demo](https://callback-hackathon.sja-affu765.workers.dev) · [Demo video](https://youtu.be/TRdv1G8JRRQ) · [Source code](https://github.com/sja-thedude/callback-hackathon)
 
 ## Inspiration
 
-Stream communities run on shared history: the familiar joke, the repeated mistake, the moment chat still remembers. Those memories sit inside an archive nobody can search while producing a live show. Callback makes that history available during the conversation.
+Stream communities run on shared history. The joke that keeps
+coming back. The corner you always die in. The thing chat still
+brings up two years later.
+
+That history exists. It's sitting in a clip archive nobody can
+search while they're producing a live show. The moment a callback
+would land, it's gone, because remembering it takes longer than
+the moment lasts.
+
+I wanted to give a stream its own memory.
 
 ## What it does
 
-A streamer connects their channel and explicitly indexes their own clips. Callback listens to live chat and searches that private archive for a distinctive connection. When the match clears the safety gates, an animated browser-source overlay brings back the original moment with its date, title, and a one-line explanation. Optional chat posting gives viewers the original clip link.
+A streamer connects their channel and indexes their own clips.
+Callback then sits invisible until it's needed.
 
-The control panel shows real indexing progress, received-message activity, candidate reasoning, competing matches, and the decision to air or hold. Automatic callbacks have a seven-second veto window; streamers can also review and approve eligible candidates manually. Confidence, ambiguity, independent voices, cooldown, duplicate status, freshness, and ownership checks protect airtime. The session trail preserves the evidence behind aired memories.
+It listens to live chat. When several chatters land on something
+that matches a moment from the archive, an overlay brings the old
+clip back on screen with its date and a line explaining the
+connection, and, when chat posting is enabled, the bot posts the original link in chat.
 
-An account-free replay lets judges try the interaction without waiting for a streamer to be live. Replay text is generated from indexed clip titles and labeled as scripted chat. The demo is restricted to my own Twitch channel, **sjathedude**. There is no third-party channel archive or fictional clip library. All submission clip footage is my own original rendered content broadcast and clipped on that channel.
+The restraint is as much the product as the retrieval. An
+uncertain match is held, not forced. A callback has to clear
+confidence, ambiguity, cooldown, duplicate, freshness and
+ownership checks before it airs, and the streamer gets a
+seven-second veto window for automatic callbacks. Eligible candidates can also be approved manually.
 
-## Architecture
+The control panel shows the whole decision: indexing progress,
+chat activity, up to three ranked matches, their separation,
+and why it aired or didn't.
 
-A Cloudflare Worker handles server-side Twitch authorization, token refresh, and Helix calls. The index retrieves original clip metadata, resolves game categories, verifies broadcaster ownership, and embeds titles plus categories with BGE Small English v1.5. Live and public demo indexing share metadata normalization and embedding input formatting. Vectors are stored in bounded records inside each private studio’s Durable Object.
+There's an account-free replay so anyone can try it without
+waiting for a stream to go live.
 
-Authenticated EventSub WebSockets deliver channel chat. Batches build a rolling 30-second query window. Retrieval ranks clip vectors by cosine similarity. Community mode requires at least three distinct chatters, the configured threshold, and a minimum 0.08 lead over the next match. A separately labeled owner-rehearsal mode permits the authorized broadcaster’s own real chat messages for testing; the retrieval and airtime gates still apply. Automatic matches are queued for seven seconds, then checked again before airing. Manual approval cannot bypass the confidence and cooldown gates.
+## How I built it
 
-A separate read-only, key-protected WebSocket synchronizes the transparent OBS source. Demo and live source modes are isolated. The chat bot posts through the official Send Chat Message API and reports delivery only when Twitch confirms `is_sent`. Twitch rate-limit responses pause further requests. Credentials and OAuth tokens remain on the server.
+A Cloudflare Worker handles Twitch OAuth, token refresh and Helix
+calls. Indexing pulls a channel's clips, verifies ownership,
+resolves game categories, and embeds titles and categories with
+BGE Small English v1.5. Vectors live in a Durable Object per
+studio.
 
-The public replay accepts only known scenario windows, caches neural results, coalesces concurrent searches, and limits inference requests. An explicitly labeled local vector fallback handles temporary inference failures. The frontend uses native JavaScript modules, CSS, original artwork, two color themes, accessible controls, and responsive layouts.
+EventSub WebSockets deliver live chat. A rolling 30-second window
+is embedded and ranked against the clip vectors by cosine
+similarity. Community mode needs three distinct chatters, a score
+above threshold, and at least a 0.08 lead over the next-best
+clip. Both the threshold and the runner-up margin must pass;
+similarity is not treated as a calibrated probability.
+
+The overlay is a transparent page added to OBS as a browser
+source, driven over a separate read-only WebSocket. Twitch application
+credentials and OAuth tokens are kept out of browser code and API responses.
 
 ## How I used Codex
 
-I described the shared-memory experience and production constraints in this thread. Codex scaffolded the frontend and Cloudflare Worker, implemented Twitch OAuth and Helix clip indexing, built EventSub subscription and chat ingestion code, and connected semantic retrieval to the private overlay.
+I described the experience I wanted and the production
+constraints, and built the project with OpenAI Codex. It scaffolded the frontend and
+the Worker, implemented Twitch OAuth and Helix clip indexing,
+wrote the EventSub subscription and chat ingestion, and wired
+semantic retrieval to the overlay.
 
-Within the same thread, Codex implemented confidence and ambiguity gates, cooldown and duplicate checks, account-switch isolation, the persistent veto queue, and confirmed chat-delivery handling. It added tests for weak matches, foreign clips, stale candidates, veto cancellation, and Twitch backoff. It exercised the deployed/local app through isolated browser checks at desktop and phone sizes, checked both themes, configured the actual OBS browser source, and measured its transparency. Codex also prepared deployment configuration, the owned-content indexing script, and the timed narration/caption tooling.
+It also built the parts that make it safe to put on a live
+broadcast: the confidence and ambiguity gates, cooldown and
+duplicate checks, account-switch isolation, the persistent veto
+queue, and delivery confirmation that only reports success when
+Twitch confirms it. It wrote tests for weak matches, foreign
+clips, stale candidates, veto cancellation and Twitch backoff,
+then drove the deployed app through browser checks at phone and
+desktop widths in both themes, configured the real OBS browser
+source, and measured its transparency.
 
-The video presents explicitly labeled evidence extracted from the actual session: my original brief, a recorded coding action, fresh passing tests, and real live verification. It is a readable export presentation rather than a native chat-application recording. The session ID above identifies the thread containing the build.
+## Challenges I ran into
 
-## Why it matters
+**Score alone is not enough.** The engine checks both similarity
+and the gap between the best and second-best clips. Automated
+tests verify that weak and ambiguous candidates are held; there
+is no measured comparison of the margin against threshold tuning.
 
-The idea turns archive retrieval into a live production element. A shared joke can become a visible moment everyone experiences together, while the streamer keeps producing the show. The engine’s restraint is part of the product: an uncertain connection is held rather than forced. Community engagement and retention gains have not been measured.
+**A wrong callback on a live stream is worse than none.** That
+reframed the whole project. Most of the engineering went into
+reasons not to fire.
 
-## Verified behavior and limits
+**Delivery had to be confirmed, not assumed.** A successful HTTP
+response does not by itself prove a chat message was sent. The
+bot checks Twitch’s `is_sent` field, with tests for rejected
+messages and real EventSub receipt of the live callback links.
 
-Eight original clips were created on **sjathedude** through real Twitch broadcasts and Helix. Each clip’s ownership, title, original thumbnail, date, duration, and provenance were checked. All eight scripted replay windows select the intended clip above the 0.72 threshold and 0.08 ambiguity margin. The deployed replay works without a visitor account or credentials.
+**Twitch rate limits.** The index fetches up to 500 clips per
+operation. Helix 429 handling and reset-window backoff have
+automated coverage; the real demo archive contains eight clips.
 
-The real channel verification covered sign-in, neural indexing, EventSub receipt, a held near miss, veto cancellation, two distinct live callbacks, and confirmed original-link bot messages received back through EventSub. The takes used a clearly labeled owner-rehearsal mode, not simulated community participation. A live product-frame broadcast was confirmed by Twitch. Native OBS Studio 33.0.1 displayed the live Robot callback; alpha checks verified transparent idle and exit. Evidence is in `LIVE_VERIFICATION.json`, `OBS_LIVE_VERIFICATION.json`, and `RETRIEVAL_VERIFICATION.json`.
+## What I learned
 
-There are 34 passing engine/server tests. Fresh cold checks at 390px and 1440px in both themes observed no console errors or horizontal overflow. The broader browser suite passed account-free replay, private overlay delivery, controls, and mocked session restoration.
+Retrieval quality is mostly about what you refuse to return. The
+engine uses both an absolute threshold and a relative margin.
+The eight demo scenarios pass both checks; broader retrieval
+quality has not been measured.
 
-Raid/subscription/category triggers and VOD transcription are not implemented. Retrieval uses clip metadata; vague titles can limit recall. Similarity scores are retrieval signals, not calibrated probabilities. Community mode’s three-person requirement was tested in automated checks; the genuine live takes demonstrate the separately labeled owner mode.
+Building for live broadcast is a different discipline from
+building for a page. There's no undo in front of an audience, so
+automatic airing needs a human-cancellable window.
 
-## Video and final submission
+## Accomplishments
 
-The edit follows [VIDEO_SCRIPT.md](VIDEO_SCRIPT.md): real live callback opening, indexed library, real chat and veto evidence, authentic exported build-session evidence, and a second live callback. Kokoro `af_heart` provides narration, with burned-in captions and no music. All clip imagery is original owned-channel content. The completed edit is [2:45 at 1080p](callback-demo.mp4), with 30fps H.264 video and AAC narration.
+Eight original clips created, indexed and retrieved correctly,
+with all eight replay scenarios selecting the intended clip above
+threshold and clear of the ambiguity margin. Real live
+verification covering sign-in, indexing, EventSub, a held near
+miss, veto cancellation, two live callbacks and confirmed bot
+delivery. OBS Studio 33.0.1 displaying a live callback with
+verified transparency. 34 passing tests.
 
-Public YouTube upload and the final Devpost form remain external submission steps. Enter the actual video URL with the repository, live demo, description, and session ID above. Keep the demo and repository available through judging. No completed YouTube upload or Devpost submission is claimed.
+## About the demo content
 
-Target submission: **2 November 2026, 10:00pm Jeddah**. Hard cutoff: **3 November 2026, 01:00 GMT+3**.
+Every clip is original content from my own Twitch channel,
+sjathedude: original rendered scenes broadcast and clipped through
+automation I authorized. Scripted replay chat is based on real clip
+titles and is not historical chat. There is no third-party
+archive and no fictional clip library. The live takes used a
+clearly labelled owner-rehearsal mode rather than simulated
+community participation.
+
+## Honest limits
+
+Raid, subscription and category triggers aren't implemented.
+Retrieval works from clip metadata, so vague titles limit recall.
+Similarity scores are retrieval signals, not calibrated
+probabilities. The three-chatter community requirement is covered
+by automated tests; the live takes demonstrate owner mode.
+Engagement and retention gains are unmeasured.
+
+## What's next
+
+VOD transcription, so retrieval works on what was said rather
+than what the clip was titled. Raid and category triggers.
+Calibrating the thresholds against real multi-streamer usage.
+
+The demo video’s build segment presents the original request, a
+recorded coding action, fresh test output, and verification results
+from the actual Codex session export. It is clearly labeled as an
+export presentation rather than native chat-application footage.

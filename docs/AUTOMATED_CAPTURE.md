@@ -60,4 +60,4 @@ Output the completed, reviewed video to `~/Desktop/callback-demo.mp4`, upload it
 
 ## Remaining external submission steps
 
-The authorization, stream key setup, broadcast, clips, and product recordings are complete. Upload the reviewed final edit publicly to YouTube and enter the actual URL and prepared copy in Devpost. No public upload or final submission is claimed by the automation.
+The authorization, stream key setup, broadcast, clips, product recordings, export, and frame review are complete. The entrant supplied https://youtu.be/TRdv1G8JRRQ. Remaining submission logistics are in [INTERNAL_NOTES.md](INTERNAL_NOTES.md).

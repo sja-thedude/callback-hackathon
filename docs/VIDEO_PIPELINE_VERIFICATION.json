@@ -20,5 +20,6 @@
   "visualInspection": "Opening, closing, every edit boundary, product states, original owned media and flagged text states inspected. No third-party graphical branding observed. Plain Twitch and Codex references identify the integration and actual build evidence.",
   "reviewLimit": "Automated text recognition and visual source-state inspection do not constitute recognition of every possible graphical trademark.",
   "buildSegment": "Explicitly labeled actual session-export presentation, not native chat UI footage.",
-  "youtubeUpload": "Not yet uploaded"
+  "youtubeUpload": "YouTube URL supplied by entrant",
+  "youtubeURL": "https://youtu.be/TRdv1G8JRRQ"
 }

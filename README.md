@@ -2,9 +2,9 @@
 
 [Live demo — callback-hackathon.sja-affu765.workers.dev](https://callback-hackathon.sja-affu765.workers.dev)
 
-[Demo video — 2:45, 1080p](docs/callback-demo.mp4)
+[Demo video — 2:45, 1080p](https://youtu.be/TRdv1G8JRRQ)
 
-The edit is complete. Public YouTube upload remains a submission step. [Video script and shot list](docs/VIDEO_SCRIPT.md).
+Built with **OpenAI Codex** in one main development thread. Codex implemented the frontend, Cloudflare Worker, Twitch OAuth and Helix indexing, EventSub chat, retrieval gates, and synchronized overlay. It also ran automated tests and browser checks and helped verify the live flow and native OBS transparency.
 
 **Your stream has a memory.** Callback connects a live conversation to a streamer's past, then brings the original clip back as a live production element. It turns “remember when” into something everyone can watch together.
 
@@ -16,18 +16,18 @@ The demo channel is **sjathedude**, the project owner’s own channel. Eight ori
 
 - A metadata-driven owned-channel replay pipeline: verified broadcaster ownership, original thumbnails and dates, title-derived chat scenarios, pause, rewind, speed controls, and match evidence. All eight neural scenarios and account-free overlay delivery have passed.
 - Dedicated transparent OBS page, invisible even during startup, with an animated entrance, original clip player, date, connection, progress bar, and exit.
-- Server-synchronized overlays, including overlays opened on another device. Private overlay links can be rotated.
+- Server-synchronized overlays, verified in separate browser contexts. Private overlay links can be rotated.
 - Searchable clip library with category filters, original clip playback, and overlay previews.
 - Adjustable confidence, cooldown, screen duration, automatic airing, and chat posting.
-- A director’s desk with three ranked candidates, model identity, match separation, and explicit airing gates.
+- A director’s desk with up to three ranked candidates, model identity, match separation, and explicit airing gates.
 - Candidate reasoning, manual approval, a seven-second automatic veto window, session history restored on refresh, and downloadable evidence.
 - A received-message activity graph, with no decorative activity presented as live traffic.
-- Live browser-source presence and a private, downloadable OBS scene collection. Demo and live browser-source modes are separate, so rehearsals cannot accidentally appear on a live-mode source.
+- Live browser-source presence and a private, downloadable OBS scene collection. Demo and live browser-source modes are separate, so demo replays do not appear on a live-mode source. Labeled owner rehearsal uses the live path.
 - Light, dark, and system themes; responsive layouts checked at 390px; keyboard focus and reduced-motion support.
 - Twitch authorization-code flow, expiring state, server-only credentials, token refresh, and disconnect/revocation.
 - Own-channel Helix indexing with progress, up to 500 clips per index operation, category resolution, neural embeddings, and durable vector storage.
 - Authenticated EventSub chat, rolling context, three distinct voices, confidence and ambiguity gates, duplicate suppression, and server-enforced cooldowns.
-- Optional chat link posting after a live callback, with explicit confirmation only when Twitch reports `is_sent`. Twitch 429 responses stop further requests until the reset window.
+- Optional chat link posting after a live callback, with explicit confirmation only when Twitch reports `is_sent`. Twitch Helix 429 responses block further Helix requests in that studio until the reset window.
 
 **Production Twitch app configured:** the app credentials are stored as Cloudflare secrets. Twitch accepted the credentials, an authenticated Helix metadata request succeeded, and the production authorization route uses the expected callback. The owner confirmed successful broadcaster authorization. Own-channel indexing, real EventSub receipt, semantic retrieval, veto cancellation, confirmed chat posting, and native OBS playback were verified against the owner’s channel. The recorded live takes use explicitly labeled owner rehearsal. Channel-event triggers such as raids and subscriptions are not included.
 
@@ -70,9 +70,9 @@ Requested Twitch scopes: `user:read:chat` and `user:write:chat`. The connected b
 
 ## How retrieval works
 
-Live indexing embeds each clip's title and game category with **BGE Small English v1.5** through the Cloudflare embedding binding. Vectors live in the streamer's own Durable Object in bounded storage records. Every five seconds at most, the engine embeds a rolling 30-second chat window and ranks clips by cosine similarity.
+Live indexing embeds each clip's title and game category with **BGE Small English v1.5** through the Cloudflare embedding binding. Vectors live in the streamer's own Durable Object in bounded storage records. No more than once every five seconds, the engine embeds a rolling 30-second chat window and ranks clips by cosine similarity.
 
-A callback must exceed the configured score, beat the runner-up by at least 0.08, clear the cooldown, and not have aired or been vetoed in this session. Three distinct chatters are required. Manual approval cannot bypass these checks, and candidates expire after 45 seconds. Automatic matches wait seven seconds for a veto, then recheck confidence, ambiguity, cooldown, duplicate status, freshness, and chat voices before airing. Similarity is a retrieval signal, not a calibrated probability.
+A callback must meet the configured score, beat the runner-up by at least 0.08, clear the cooldown, and not have aired or been vetoed in this session. Community mode requires three distinct chatters; labeled owner rehearsal accepts the authorized broadcaster’s own messages. Manual approval still enforces confidence, ambiguity, cooldown, duplicate, ownership, and candidate-freshness checks. Candidates expire after 45 seconds. Automatic matches wait seven seconds for a veto, then recheck confidence, ambiguity, cooldown, duplicate status, freshness, and chat voices before airing. Similarity is a retrieval signal, not a calibrated probability.
 
 The account-free demo runs **BGE Small English v1.5** retrieval over an API-verified, fixed public library. Its neural endpoint accepts only known replay windows; it cannot accept arbitrary inference prompts. Public vectors and replay search results are cached, concurrent identical requests share work, and an edge rate limiter bounds inference requests. A labeled local concept-assisted vector fallback keeps rehearsal usable if neural retrieval is temporarily unavailable. Similarity remains a retrieval signal rather than a calibrated probability.
 
@@ -102,7 +102,7 @@ npm run deploy
 
 `wrangler.jsonc` names the Worker **callback-hackathon**, binds its Durable Object namespace and embedding service, and serves `public/`. Its account ID identifies this deployment; use your own Cloudflare account ID when deploying a fork. Cloudflare's runtime services may incur normal usage charges. No managed vector database is needed.
 
-Static response headers restrict script, frame, and asset origins. Mutating requests and studio WebSockets require a matching origin. Cookies are HttpOnly, Secure in production, and SameSite=Lax. Overlay links are read-only bearer secrets, separate from the HttpOnly controller credential; resetting a link closes existing sockets. Disconnect revokes the Twitch token and clears the session's channel data. Changing broadcasters clears the old archive, disables automatic airing/chat posting, and revokes old overlay links. A final ownership gate also rejects foreign or unindexed clips at the moment of airing.
+Static response headers restrict script, frame, and asset origins. Studio API mutations and studio WebSockets require a matching origin. Cookies are HttpOnly, Secure in production, and SameSite=Lax. Overlay links are read-only bearer secrets, separate from the HttpOnly controller credential; resetting a link closes existing sockets. Disconnect revokes the Twitch token and clears the session's channel data. Changing broadcasters clears the old archive, disables automatic airing/chat posting, and revokes old overlay links. A final ownership gate also rejects foreign or unindexed clips at the moment of airing.
 
 ## Demo content and playback
 
@@ -118,9 +118,9 @@ The [automation guide](docs/AUTOMATED_CAPTURE.md) covers original scene renderin
 
 Follow the [step-by-step live walkthrough](docs/LIVE_WALKTHROUGH.md). Live chat uses authenticated EventSub WebSockets; there is no separate IRC connection. Keep the studio open while streaming. Community mode requires three actual chatters. An explicitly labeled owner-rehearsal mode accepts only the broadcaster’s own messages for an automated live test; the other airing gates still apply.
 
-The [video script](docs/VIDEO_SCRIPT.md) follows a 2:45 shot list. Kokoro `af_heart` narration and 23 timed caption cues have been generated locally. The earlier third-party-clip recordings were removed from the current submission assets. The product takes and authentic exported build evidence are recorded. Public YouTube upload remains an external submission step. Video tooling is described in [the production guide](docs/VIDEO_PRODUCTION.md).
+The [video script](docs/VIDEO_SCRIPT.md) follows a 2:45 shot list. Kokoro `af_heart` narration and 23 timed caption cues have been generated locally. The earlier third-party-clip recordings were removed from the current submission assets. The [published demo video](https://youtu.be/TRdv1G8JRRQ) includes product takes and clearly labeled evidence from the actual Codex session export. It does not present that export as a native chat UI recording. Video tooling is described in [the production guide](docs/VIDEO_PRODUCTION.md).
 
-The [submission copy](docs/SUBMISSION.md), [requirements checklist](docs/HACKATHON_REQUIREMENTS.md), and [verification record](docs/VERIFICATION.md) record verified behavior and the remaining publication steps.
+The [submission copy](docs/SUBMISSION.md), [requirements checklist](docs/HACKATHON_REQUIREMENTS.md), and [verification record](docs/VERIFICATION.md) record verified behavior and its limits. Submission logistics are in [internal notes](docs/INTERNAL_NOTES.md).
 
 ## Screenshots
 
