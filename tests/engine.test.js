@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { embed, cosine, rank, decision, parseIRC } from "../public/engine.js";
-import { clips, scenarios } from "../public/data.js";
-test("every replay retrieves the intended real clip", () => {
+import { clips, scenarios } from "./fixtures.js";
+test("title-derived replays retrieve their intended fixture clip", () => {
   for (const s of scenarios) {
     const ranked = rank(s.messages.slice(-5).join(" "), clips);
     assert.equal(ranked[0].id, clips[s.clip].id);
@@ -48,7 +48,7 @@ test("IRC messages parse display names and reject protocol messages", () => {
   assert.deepEqual(
     {
       ...parseIRC(
-        "@display-name=Jules :jules!jules@jules.tmi.twitch.tv PRIVMSG #lirik :remember the smoke tactic",
+        "@display-name=Jules :jules!jules@jules.tmi.twitch.tv PRIVMSG #owner :remember the smoke tactic",
       ),
       at: 0,
     },
@@ -64,8 +64,8 @@ test("each demo clip has a unique public link and valid date", () => {
     );
     assert.ok(new URL(c.url).pathname.endsWith(c.id));
     assert.ok(Number.isFinite(Date.parse(c.date)));
-    assert.equal(c.broadcaster, "LIRIK");
-    assert.equal(c.broadcasterId, "23161357");
+    assert.equal(c.broadcaster, "Test Owner");
+    assert.equal(c.broadcasterId, "test-owner");
     assert.ok(c.thumbnail.startsWith("https://"));
     assert.ok(c.duration > 0);
   }

@@ -1,0 +1,91 @@
+1
+00:00:02,000 --> 00:00:04,542
+Chat has just remembered an earlier moment.
+
+2
+00:00:07,000 --> 00:00:12,344
+The engine finds the original clip, checks the connection, and brings it back onto the stream.
+
+3
+00:00:14,000 --> 00:00:16,188
+The date and the reason appear with it.
+
+4
+00:00:20,400 --> 00:00:26,074
+Streamers can have years of clips, but nobody can search that history while producing a live show.
+
+5
+00:00:29,000 --> 00:00:31,585
+Callbacks are some of the best moments on stream.
+
+6
+00:00:34,000 --> 00:00:37,064
+They depend on remembering the right thing at the right time.
+
+7
+00:00:40,400 --> 00:00:44,079
+I connect my channel and explicitly index my own clips.
+
+8
+00:00:44,500 --> 00:00:50,153
+The index uses real clip titles, categories, dates, and thumbnails from the API.
+
+9
+00:00:51,000 --> 00:00:55,703
+Embeddings let the engine compare a rolling chat window with those memories.
+
+10
+00:00:57,000 --> 00:01:00,317
+The activity graph shows messages actually received.
+
+11
+00:01:01,000 --> 00:01:05,499
+The candidate feed explains the connection and shows competing matches.
+
+12
+00:01:07,000 --> 00:01:13,954
+Community mode needs three voices. This recording uses a labeled rehearsal with my own live messages.
+
+13
+00:01:16,000 --> 00:01:19,828
+Here, the engine holds a near miss instead of forcing a callback.
+
+14
+00:01:24,000 --> 00:01:28,310
+A qualifying automatic callback gives me seven seconds to veto it.
+
+15
+00:01:33,000 --> 00:01:39,399
+Cooldown and duplicate checks protect the timing. When it airs, the bot posts the original clip link.
+
+16
+00:01:40,400 --> 00:01:46,117
+I built this in one Codex thread, starting with the experience I wanted for streamers and chat.
+
+17
+00:01:48,000 --> 00:01:54,388
+Codex implemented the Helix clip index, server-side authorization, and EventSub chat connection.
+
+18
+00:01:56,000 --> 00:02:00,502
+It built semantic retrieval, the airing gates, and the synchronized overlay.
+
+19
+00:02:03,000 --> 00:02:09,388
+In this thread, we tested account isolation, veto cancellation, rate limits, and overlay delivery.
+
+20
+00:02:13,000 --> 00:02:18,407
+We also checked phone layouts, both themes, and transparency in a real browser source.
+
+21
+00:02:20,400 --> 00:02:22,761
+All demo clips come from my own channel.
+
+22
+00:02:26,000 --> 00:02:30,651
+The public replay needs no account, so anyone can try the same interaction.
+
+23
+00:02:35,000 --> 00:02:39,512
+Callback gives a community's shared history a way back into the conversation.

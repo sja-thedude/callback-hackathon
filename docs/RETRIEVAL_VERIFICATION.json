@@ -1,0 +1,72 @@
+{
+  "verifiedAt": "2026-11-01T21:20:27.389Z",
+  "channel": "sjathedude",
+  "visitorCredentials": false,
+  "source": "real deployed neural inference",
+  "results": [
+    {
+      "id": "WimpySassyLionShadyLulu-uOq2ahK81bW9V7Cd",
+      "title": "Hourglass in a desert of dunes",
+      "similarity": 0.7691805686599883,
+      "separation": 0.2676548395405568,
+      "verdict": "Strong, distinctive connection",
+      "model": "BGE Small English v1.5"
+    },
+    {
+      "id": "BeautifulMoistMetalWutFace-t6_1stEy5ybFt0vq",
+      "title": "Paint brushes beside a yellow canvas",
+      "similarity": 0.7903390350972218,
+      "separation": 0.3075313207701993,
+      "verdict": "Strong, distinctive connection",
+      "model": "BGE Small English v1.5"
+    },
+    {
+      "id": "ElatedSparklyTruffleOptimizePrime-gn7kWJvU9jd453bn",
+      "title": "Lighthouse above a stormy sea",
+      "similarity": 0.7455554393406941,
+      "separation": 0.24450365412925001,
+      "verdict": "Strong, distinctive connection",
+      "model": "BGE Small English v1.5"
+    },
+    {
+      "id": "KitschyHonorablePangolinMikeHogu-GGn3PRaUFaBFh3UA",
+      "title": "Wooden robot tending basil",
+      "similarity": 0.8160536522257527,
+      "separation": 0.2891475572447918,
+      "verdict": "Strong, distinctive connection",
+      "model": "BGE Small English v1.5"
+    },
+    {
+      "id": "AnnoyingFaintKathyBCouch-CJ3q9yfIzhpLCMQT",
+      "title": "Red train at a snowy bridge",
+      "similarity": 0.731939698262244,
+      "separation": 0.2939534131924192,
+      "verdict": "Strong, distinctive connection",
+      "model": "BGE Small English v1.5"
+    },
+    {
+      "id": "PopularCheerfulPastaVoHiYo-hlqKjZhavqsD4L5X",
+      "title": "Sourdough loaf on a kitchen board",
+      "similarity": 0.81085441053943,
+      "separation": 0.2940243502614964,
+      "verdict": "Strong, distinctive connection",
+      "model": "BGE Small English v1.5"
+    },
+    {
+      "id": "SlipperyDarlingTroutGrammarKing-hA3Z5GGXsNKvRc4o",
+      "title": "Telescope under Saturn's rings",
+      "similarity": 0.7753536668022559,
+      "separation": 0.3046030929325757,
+      "verdict": "Strong, distinctive connection",
+      "model": "BGE Small English v1.5"
+    },
+    {
+      "id": "ExquisiteBitterAyeayeSaltBae-fCGagjs-ZnrXl_cp",
+      "title": "Paper rocket beside a blue mug",
+      "similarity": 0.7941937023055193,
+      "separation": 0.31258725116550035,
+      "verdict": "Strong, distinctive connection",
+      "model": "BGE Small English v1.5"
+    }
+  ]
+}

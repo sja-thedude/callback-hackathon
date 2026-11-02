@@ -1,0 +1,15 @@
+{
+  "verifiedAt": "2026-10-31T15:18:06.736Z",
+  "obsVersion": "33.0.1",
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "deployment": "http://127.0.0.1:8787",
+  "sourceKind": "browser_source",
+  "overlayConnected": true,
+  "screenshot": "screenshots/obs-overlay-idle.png",
+  "onAirOwnedClip": "pending published clips",
+  "idleFullyTransparent": true,
+  "alphaExtrema": [0, 0]
+}

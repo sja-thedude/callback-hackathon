@@ -10,6 +10,10 @@ const context = await browser.newContext({
   acceptDownloads: true,
 });
 try {
+  assert.ok(
+    clips.length > 0,
+    "Owner clips are not published yet; end-to-end demo readiness cannot pass.",
+  );
   const page = await context.newPage();
   await page.goto(origin);
   await page.waitForFunction(() =>
@@ -28,7 +32,7 @@ try {
     assert.ok(match.margin >= 0.08);
   }
   console.log(
-    "PASS real neural inference retrieves the intended clip in all four scenarios",
+    `PASS real neural inference retrieves the intended owned clip in all ${scenarios.length} scenarios`,
   );
   await page.locator('[data-view="overlay"]').click();
   const url = await page.locator("#overlay-url").inputValue();

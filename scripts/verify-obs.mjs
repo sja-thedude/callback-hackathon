@@ -1,6 +1,12 @@
 import fs from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { connectOBS } from "./obs-client.mjs";
+import { clips } from "../public/data.js";
+const idleOnly = process.argv.includes("--idle-only");
+if (!clips.length && !idleOnly)
+  throw new Error(
+    "Publish and index owned clips before recording an on-air OBS proof. Use --idle-only to check transparency now.",
+  );
 const origin =
   process.env.TEST_URL || "https://callback-hackathon.sja-affu765.workers.dev";
 const obs = await connectOBS(
@@ -18,11 +24,20 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 await mkdir("docs/screenshots", { recursive: true });
 await mkdir("/tmp/callback-obs-recordings", { recursive: true });
 let recording = false;
+let previousCollection, previousScene;
 try {
+  if (
+    (await obs.call("GetStreamStatus")).outputActive ||
+    (await obs.call("GetRecordStatus")).outputActive
+  )
+    throw new Error(
+      "OBS is streaming or recording. Finish that take before running verification; no scene changes were made.",
+    );
+  previousCollection = (await obs.call("GetSceneCollectionList"))
+    .currentSceneCollectionName;
+  previousScene = (await obs.call("GetCurrentProgramScene"))
+    .currentProgramSceneName;
   const version = await obs.call("GetVersion");
-  const special = await obs.call("GetSpecialInputs");
-  for (const name of Object.values(special).filter(Boolean))
-    await obs.call("SetInputMute", { inputName: name, inputMuted: true });
   const collections = await obs.call("GetSceneCollectionList");
   if (!collections.sceneCollections.includes("Callback QA"))
     await obs.call("CreateSceneCollection", {
@@ -122,68 +137,106 @@ try {
   }
   await shot("docs/screenshots/obs-overlay-idle.png", overlay);
   await shot("docs/screenshots/obs-scene-idle.png", scene);
-  const status = await obs.call("GetStreamStatus");
-  if (status.outputActive)
-    throw new Error(
-      "A stream is already active; recording setup left unchanged.",
+  if (idleOnly) {
+    fs.writeFileSync(
+      "docs/OBS_IDLE_VERIFICATION.json",
+      JSON.stringify(
+        {
+          verifiedAt: new Date().toISOString(),
+          obsVersion: version.obsVersion,
+          canvas: { width: 1920, height: 1080 },
+          deployment: origin,
+          sourceKind: "browser_source",
+          overlayConnected: true,
+          screenshot: "screenshots/obs-overlay-idle.png",
+          onAirOwnedClip: "pending published clips",
+        },
+        null,
+        2,
+      ) + "\n",
     );
-  await obs.call("SetRecordDirectory", {
-    recordDirectory: "/tmp/callback-obs-recordings",
-  });
-  await obs.call("StartRecord");
-  recording = true;
-  await wait(1800);
-  const sent = await fetch(origin + "/api/demo-broadcast", {
-    method: "POST",
-    headers: {
-      Cookie: cookie,
-      Origin: origin,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      id: "OptimisticEnjoyableSoybeanPrimeMe-N-TBy6nLpaWI59TF",
-      reason:
-        "OBS verification · a real LIRIK memory, delivered from the live Callback deployment.",
-    }),
-  });
-  if (!sent.ok) throw new Error("Overlay test dispatch failed.");
-  await wait(8500);
-  await shot("docs/screenshots/obs-callback.png", scene);
-  await shot("docs/screenshots/obs-overlay-on-air.png", overlay);
-  await wait(14000);
-  await shot("docs/screenshots/obs-overlay-exit.png", overlay);
-  const record = await obs.call("StopRecord");
-  recording = false;
-  const report = {
-    verifiedAt: new Date().toISOString(),
-    obsVersion: version.obsVersion,
-    obsWebSocketVersion: version.obsWebSocketVersion,
-    canvas: { width: 1920, height: 1080, fps: 30 },
-    sourceKind: "browser_source",
-    deployment: origin,
-    checks: {
-      realOBS: true,
-      authenticatedControl: true,
-      privateOverlay: true,
-      idleScreenshot: true,
-      onAirScreenshot: true,
-      exitScreenshot: true,
-    },
-    recordingFile: record.outputPath,
-  };
-  fs.writeFileSync(
-    "/tmp/callback-obs-verification.json",
-    JSON.stringify(report, null, 2),
-  );
-  console.log("Actual OBS recording:", record.outputPath);
-  console.log(
-    "OBS " +
-      version.obsVersion +
-      " browser-source verification captured at 1920×1080.",
-  );
+    console.log(
+      "Actual OBS idle source captured. Check its alpha channel; owned on-air playback remains pending.",
+    );
+  } else {
+    const status = await obs.call("GetStreamStatus");
+    if (status.outputActive)
+      throw new Error(
+        "A stream is already active; recording setup left unchanged.",
+      );
+    await obs.call("SetRecordDirectory", {
+      recordDirectory: "/tmp/callback-obs-recordings",
+    });
+    await obs.call("StartRecord");
+    recording = true;
+    await wait(1800);
+    const sent = await fetch(origin + "/api/demo-broadcast", {
+      method: "POST",
+      headers: {
+        Cookie: cookie,
+        Origin: origin,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: clips[0].id,
+        reason:
+          "OBS verification · an owned-channel memory delivered from Callback.",
+      }),
+    });
+    if (!sent.ok) throw new Error("Overlay test dispatch failed.");
+    await wait(8500);
+    await shot("docs/screenshots/obs-callback.png", scene);
+    await shot("docs/screenshots/obs-overlay-on-air.png", overlay);
+    await wait(14000);
+    await shot("docs/screenshots/obs-overlay-exit.png", overlay);
+    const record = await obs.call("StopRecord");
+    recording = false;
+    const report = {
+      verifiedAt: new Date().toISOString(),
+      obsVersion: version.obsVersion,
+      obsWebSocketVersion: version.obsWebSocketVersion,
+      canvas: { width: 1920, height: 1080, fps: 30 },
+      sourceKind: "browser_source",
+      deployment: origin,
+      checks: {
+        realOBS: true,
+        authenticatedControl: true,
+        privateOverlay: true,
+        idleScreenshot: true,
+        onAirScreenshot: true,
+        exitScreenshot: true,
+      },
+      recordingFile: record.outputPath,
+    };
+    fs.writeFileSync(
+      "/tmp/callback-obs-verification.json",
+      JSON.stringify(report, null, 2),
+    );
+    console.log("Actual OBS recording:", record.outputPath);
+    console.log(
+      "OBS " +
+        version.obsVersion +
+        " browser-source verification captured at 1920×1080.",
+    );
+  }
 } catch (error) {
   if (recording) await obs.call("StopRecord").catch(() => {});
   throw error;
 } finally {
+  if (
+    previousCollection &&
+    !(await obs.call("GetStreamStatus").catch(() => ({ outputActive: true })))
+      .outputActive
+  ) {
+    await obs
+      .call("SetCurrentSceneCollection", {
+        sceneCollectionName: previousCollection,
+      })
+      .catch(() => {});
+    if (previousScene)
+      await obs
+        .call("SetCurrentProgramScene", { sceneName: previousScene })
+        .catch(() => {});
+  }
   obs.close();
 }
