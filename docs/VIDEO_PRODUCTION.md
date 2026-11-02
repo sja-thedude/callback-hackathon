@@ -10,7 +10,7 @@ The completed final edit is **165 seconds**, 1920 × 1080, 30fps, H.264/AAC, wit
 - [Timed caption file](video-captions.srt). Local caption assets: `/tmp/callback-video/captions.srt` and `captions.json`, with transparent PNG caption images.
 - The earlier third-party-clip walkthrough is excluded from the current submission assets. It is not the final video.
 
-The audio runs exactly 165 seconds including intentional pauses. It contains planned claims that must be supported by the real recordings before publication. Real owned-channel product takes and an explicitly labeled authentic session-export presentation are captured. The exported file is `~/Desktop/callback-demo.mp4`, mirrored as `docs/callback-demo.mp4`. Public YouTube upload remains a separate submission step.
+The audio runs exactly 165 seconds including intentional pauses. It contains planned claims that must be supported by the real recordings before publication. Real owned-channel product takes and an explicitly labeled authentic session-export presentation are captured. The exported file is `~/Desktop/callback-demo.mp4`, mirrored as `docs/callback-demo.mp4`. The entrant supplied the [YouTube video URL](https://youtu.be/TRdv1G8JRRQ); submission logistics are in [INTERNAL_NOTES.md](INTERNAL_NOTES.md).
 
 ## Reproduce narration
 
