@@ -109,15 +109,18 @@ export async function publishPage(initialPage) {
     failure = "The encoder input closed.";
     active = false;
   });
+  const clients = new Map();
+  async function capture(target) {
+    if (!clients.has(target)) clients.set(target, target.createCDPSession());
+    const client = await clients.get(target);
+    const frame = await client.send("Page.captureScreenshot", { format: "jpeg", quality: 82, captureBeyondViewport: false, fromSurface: true });
+    return Buffer.from(frame.data, "base64");
+  }
   const loop = (async () => {
     try {
       while (active) {
         const start = Date.now();
-        const frame = await page.screenshot({
-          type: "jpeg",
-          quality: 82,
-          captureBeyondViewport: false,
-        });
+        const frame = await capture(page);
         if (!active) break;
         if (!encoder.stdin.write(frame)) await once(encoder.stdin, "drain");
         frames++;

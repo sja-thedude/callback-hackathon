@@ -43,7 +43,7 @@ This is the planned final cut. Record the real behavior before using claims abou
 
 ## 1:40–2:20 — Show how it was built
 
-**Shot:** Screen-record this actual build thread. Crop to the conversation and relevant implementation/test evidence. Show your original product request, the implementation of OAuth/Helix indexing and EventSub chat, the semantic and veto work, and passing checks. Use real scroll or cuts between these parts. Exclude the application icon/title bar, unrelated chats, account avatars, local secrets, private overlay URLs, and terminal environment values. Do not fabricate a development conversation or substitute a mock terminal.
+**Shot:** Present selected user-visible evidence from this actual session export in a clearly labeled, readable viewer. Show the original request, a timestamped recorded coding action for Helix/EventSub, fresh test output, and actual live verification. The label must say “Actual session export · presented for readability.” This is not a native chat UI recording. Exclude reasoning, system/developer instructions, unrelated records, credentials, private URLs, and graphical platform branding.
 
 **Narration:**
 
@@ -57,14 +57,8 @@ This is the planned final cut. Record the real behavior before using claims abou
 
 > All demo clips come from my own channel. The public replay needs no account, so anyone can try the same interaction. Callback gives a community's shared history a way back into the conversation.
 
-## Files to record
+## Captured sources
 
-Record 1080p or higher with notifications hidden and system audio/music muted. Narration will be added separately. Keep clean continuous takes, with five seconds of padding at either end:
+The automated product takes are in `/tmp/callback-auto-recordings/`: indexing, library, held near miss, actual veto, live-studio evidence, and two real overlay callbacks. `LIVE_VERIFICATION.json` records the actual live checks. `scripts/record-build-evidence.mjs` creates the authentic exported build-evidence segment; `BUILD_EVIDENCE.json` records provenance without publishing the private session export.
 
-- `opening.mp4`: the genuine chat-triggered callback on your own live scene.
-- `problem.mp4`: your indexed library and studio.
-- `studio.mp4`: indexing, live graph, candidate evidence, a held near miss, veto, and confirmed chat posting. Long raw takes are fine; I will edit them.
-- `build.mp4`: this actual build thread and relevant checks, without private values or application branding.
-- `closing.mp4`: a second clean callback entrance/playback/exit.
-
-Provide the local folder path after recording. Keep raw footage outside the repository. I will generate narration, edit the takes, burn captions, inspect the final frames, and export `~/Desktop/callback-demo.mp4`. The final export cannot be completed before these recordings exist. Do not upload the earlier third-party-clip walkthrough as the final submission video.
+The final edit goes to `~/Desktop/callback-demo.mp4`. Review output frames, then upload publicly to YouTube and enter the actual URL in README and Devpost. No earlier third-party-clip material is part of this edit.

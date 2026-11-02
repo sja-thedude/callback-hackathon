@@ -39,6 +39,12 @@ try {
       for (const view of ["studio", "library", "overlay", "guide"]) {
         if (width === 390) await page.locator("#menu").click();
         await page.locator(`[data-view="${view}"]`).click();
+        if (view === "library") {
+          await page.locator(".clip-art img").evaluateAll(async (images) => {
+            for (const image of images) image.loading = "eager";
+            await Promise.all(images.map((image) => image.decode()));
+          });
+        }
         assert.equal(
           await page.evaluate(
             () => document.documentElement.scrollWidth > innerWidth,

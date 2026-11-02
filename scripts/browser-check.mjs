@@ -150,6 +150,10 @@ try {
     }
   }
   if (clips.length) {
+    await page.locator("#open-settings").click();
+    await page.locator("#threshold").fill("72");
+    await page.locator("#save-settings").click();
+    await page.waitForFunction(() => !document.querySelector("#settings-dialog").open);
     await page
       .locator("#scenario")
       .selectOption(String(Math.min(1, scenarios.length - 1)));
@@ -223,6 +227,7 @@ try {
   await live.waitForFunction(() =>
     document.querySelector("#stat-callbacks").textContent.startsWith("1"),
   );
+  assert.equal(new URL(await live.locator("#overlay-url").inputValue()).searchParams.get("mode"), "live");
   await live.locator("#pending-callback").waitFor();
   assert.match(await live.locator("#pending-callback").innerText(), /Airs in/);
   await live.locator("#veto-candidate").click();

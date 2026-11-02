@@ -1,0 +1,17 @@
+{
+  "sessionID": "01a18e51-660f-7513-a84d-3ce53f8c7732",
+  "source": "Actual local session export",
+  "nativeChatUIRecording": false,
+  "presentation": "Selected user request and visible coding action, fresh tests, actual live report",
+  "excluded": [
+    "reasoning",
+    "analysis",
+    "system instructions",
+    "developer instructions",
+    "credentials"
+  ],
+  "requestTimestamp": "2026-10-30T19:37:48.506Z",
+  "codingActionTimestamp": "2026-10-30T19:40:49.627Z",
+  "selectedActionSHA256": "72f5098dddb955c97630c9987263f3f7229111a7ebcbe2fb7460227f3dabfb61",
+  "sourceSessionSHA256": "4a060f24a27f42d2fbd8c3b052ab8559198ebcaf38f67db9444d9d44620e3ccb"
+}

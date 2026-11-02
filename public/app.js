@@ -1111,6 +1111,7 @@ function startStudio() {
   function liveMode() {
     resetReplay();
     state.mode = "live";
+    overlayLink();
     state.clips = state.session.clips || [];
     $("#test-overlay").disabled = !state.clips.length;
     state.lastFire = state.session.lastFire || 0;
@@ -1358,6 +1359,12 @@ function startStudio() {
       }
       if (event.type === "callback-pending" && state.mode === "live")
         renderPending(event.pending);
+      if (event.type === "chat-paused" && state.mode === "live") {
+        liveBatch = [];
+        state.candidate = null;
+        renderPending(null);
+        $("#candidate").classList.add("hidden");
+      }
       if (event.type === "veto" && state.mode === "live") {
         renderPending(null);
         if (state.candidate?.id === event.id) {
